@@ -89,7 +89,7 @@ final class ScanFlowLauncher: ObservableObject {
                           let image = UIImage(data: data) else { return nil }
                     
                     //compress file ke lebih kecil
-                    return image.downsampledForOCR()
+                    return await image.downsampledForOCR()
                 }
             }
             // paralel

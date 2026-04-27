@@ -1,6 +1,6 @@
 //
 //  DocumentWidget.swift
-//  hhWidget
+//  hhWidget  (widget extension target only)
 //
 
 import WidgetKit
@@ -44,7 +44,7 @@ struct DocumentWidgetProvider: TimelineProvider {
             name: "Boarding Pass", categoryName: "Flight",
             notePreview: "FLIGHT: GA 123 • SEAT: 12A",
             imagePath: "", startDate: nil, endDate: nil,
-            topCategories: previewShortcuts
+            topCategories: []
         )
     }
 
@@ -54,23 +54,7 @@ struct DocumentWidgetProvider: TimelineProvider {
     }
 }
 
-private let previewShortcuts: [WidgetCategoryShortcut] = [
-    WidgetCategoryShortcut(id: "1", tripId: "", name: "Flight",      icon: "airplane",        colorHex: "#5B8CFF"),
-    WidgetCategoryShortcut(id: "2", tripId: "", name: "Hotel",       icon: "bed.double.fill", colorHex: "#FF9F5B"),
-    WidgetCategoryShortcut(id: "3", tripId: "", name: "Reservation", icon: "fork.knife",      colorHex: "#5BCC8C"),
-]
-
-// MARK: - Color helper
-
-private func colorFromHex(_ hex: String) -> Color {
-    let h = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-    var int: UInt64 = 0
-    Scanner(string: h).scanHexInt64(&int)
-    let r = Double((int >> 16) & 0xFF) / 255
-    let g = Double((int >> 8)  & 0xFF) / 255
-    let b = Double( int        & 0xFF) / 255
-    return Color(red: r, green: g, blue: b)
-}
+// MARK: - UIImage resize helper
 
 private extension UIImage {
     func resizedForWidgetArchive(maxSide: CGFloat, maxArea: CGFloat) -> UIImage {
@@ -82,14 +66,11 @@ private extension UIImage {
         guard scale < 1 else { return self }
 
         let newSize = CGSize(
-            width: max((size.width * scale).rounded(), 1),
+            width:  max((size.width  * scale).rounded(), 1),
             height: max((size.height * scale).rounded(), 1)
         )
-
         let renderer = UIGraphicsImageRenderer(size: newSize)
-        return renderer.image { _ in
-            draw(in: CGRect(origin: .zero, size: newSize))
-        }
+        return renderer.image { _ in draw(in: CGRect(origin: .zero, size: newSize)) }
     }
 }
 
@@ -107,97 +88,86 @@ struct DocumentWidgetEntryView: View {
     }
 }
 
-// MARK: - Shortcut Button
-
-struct CategoryShortcutButton: View {
-    let shortcut: WidgetCategoryShortcut
-
-    // hh://category/{categoryId}/{tripId}
-    var deepLinkURL: URL {
-        let tripPart = shortcut.tripId.isEmpty ? "" : "/\(shortcut.tripId)"
-        return URL(string: "hh://category/\(shortcut.id)\(tripPart)") ?? URL(string: "hh://")!
-    }
-
-    var body: some View {
-        Link(destination: deepLinkURL) {
-            ZStack {
-                Circle()
-                    .fill(colorFromHex(shortcut.colorHex).opacity(0.18))
-                    .frame(width: 36, height: 36)
-                Image(systemName: shortcut.icon)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(colorFromHex(shortcut.colorHex))
-            }
-        }
-    }
-}
-
 // MARK: - Small Widget
+//
+// Photo-frame layout:
+//   • Image fills the full square via scaledToFill + GeometryReader sizing
+//   • Gradient scrim covers the bottom 55% — keeps top of photo clean
+//   • Category pill + document name pinned to bottom-left inside the scrim
+//   • No shortcut buttons
 
 struct SmallDocumentWidget: View {
     let entry: DocumentEntry
 
-    // hh://document/{docId}/{categoryId}/{tripId}
     private var documentURL: URL {
         let s = entry.snapshot
         let catPart  = s?.categoryId.isEmpty == false ? "/\(s!.categoryId)" : ""
         let tripPart = s?.tripId.isEmpty     == false ? "/\(s!.tripId)"     : ""
-        return URL(string: "hh://document/\(s?.id ?? "")\(catPart)\(tripPart)") ?? URL(string: "hh://")!
+        return URL(string: "hh://document/\(s?.id ?? "")\(catPart)\(tripPart)")
+            ?? URL(string: "hh://")!
     }
 
     var body: some View {
-        ZStack {
-            Link(destination: documentURL) {
+        Link(destination: documentURL) {
+            GeometryReader { geo in
                 ZStack(alignment: .bottomLeading) {
+
+                    // ── Full-square photo ──────────────────────────────────
                     if let img = entry.image {
                         Image(uiImage: img)
                             .resizable()
                             .scaledToFill()
+                            .frame(width: geo.size.width, height: geo.size.height)
+                            .clipped()
                     } else {
-                        Color(.systemGray5)
-                        Image(systemName: "doc.fill")
-                            .font(.largeTitle)
-                            .foregroundStyle(.secondary)
+                        ZStack {
+                            Color(.systemGray5)
+                            Image(systemName: "doc.fill")
+                                .font(.largeTitle)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(width: geo.size.width, height: geo.size.height)
                     }
 
+                    // ── Bottom-half scrim ──────────────────────────────────
                     LinearGradient(
-                        colors: [.black.opacity(0.7), .clear],
-                        startPoint: .bottom, endPoint: .center
+                        colors: [.black.opacity(0.78), .clear],
+                        startPoint: .bottom, endPoint: .top
                     )
+                    .frame(height: geo.size.height * 0.55)
+                    .frame(maxWidth: .infinity, alignment: .bottom)
 
-                    VStack(alignment: .leading, spacing: 3) {
+                    // ── Category + name labels ─────────────────────────────
+                    VStack(alignment: .leading, spacing: 4) {
                         if let cat = entry.snapshot?.categoryName {
                             Text(cat.uppercased())
                                 .font(.system(size: 8, weight: .bold))
-                                .foregroundStyle(.white.opacity(0.8))
+                                .foregroundStyle(.white.opacity(0.85))
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
-                                .background(Capsule().fill(.white.opacity(0.2)))
+                                .background(Capsule().fill(.white.opacity(0.18)))
                         }
                         Text(entry.snapshot?.name ?? "No documents")
                             .font(.caption.bold())
                             .foregroundStyle(.white)
                             .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(10)
                 }
-            }
-
-            if let shortcuts = entry.snapshot?.topCategories, !shortcuts.isEmpty {
-                VStack(spacing: 6) {
-                    ForEach(shortcuts.prefix(3)) { shortcut in
-                        CategoryShortcutButton(shortcut: shortcut)
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
-                .padding(.trailing, 8)
+                .frame(width: geo.size.width, height: geo.size.height)
             }
         }
-        .containerBackground(.clear, for: .widget)
+        .containerBackground(.black, for: .widget)
     }
 }
 
 // MARK: - Medium Widget
+//
+// Left column : perfect square image (width == widget height via GeometryReader)
+//               scaledToFill + clipped — never bleeds into the text column
+// Right column: category pill, document name, note preview
+// No shortcut buttons
 
 struct MediumDocumentWidget: View {
     let entry: DocumentEntry
@@ -206,75 +176,77 @@ struct MediumDocumentWidget: View {
         let s = entry.snapshot
         let catPart  = s?.categoryId.isEmpty == false ? "/\(s!.categoryId)" : ""
         let tripPart = s?.tripId.isEmpty     == false ? "/\(s!.tripId)"     : ""
-        return URL(string: "hh://document/\(s?.id ?? "")\(catPart)\(tripPart)") ?? URL(string: "hh://")!
+        return URL(string: "hh://document/\(s?.id ?? "")\(catPart)\(tripPart)")
+            ?? URL(string: "hh://")!
     }
 
     var body: some View {
-        HStack(spacing: 0) {
+        GeometryReader { geo in
+            // Image column width == widget height → perfect square
+            let imageSize = geo.size.height
 
-            Link(destination: documentURL) {
-                ZStack {
-                    Color(.systemGray5)
-                    if let img = entry.image {
-                        Image(uiImage: img)
-                            .resizable()
-                            .scaledToFill()
-                    } else {
-                        Image(systemName: "doc.fill")
-                            .font(.largeTitle)
-                            .foregroundStyle(.tertiary)
-                    }
-                }
-                .frame(width: 120)
-                .clipped()
-            }
+            HStack(spacing: 0) {
 
-            VStack(alignment: .leading, spacing: 6) {
-
-                if let cat = entry.snapshot?.categoryName {
-                    Text(cat.uppercased())
-                        .font(.system(size: 9, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 3)
-                        .background(Color(.systemGray5))
-                        .clipShape(Capsule())
-                }
-
+                // ── Square image ───────────────────────────────────────────
                 Link(destination: documentURL) {
-                    Text(entry.snapshot?.name ?? "No upcoming documents")
-                        .font(.subheadline.bold())
-                        .foregroundStyle(.primary)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .multilineTextAlignment(.leading)
-                }
-
-                if let note = entry.snapshot?.notePreview, !note.isEmpty {
-                    Text(note)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                }
-
-                Spacer(minLength: 0)
-
-                if let shortcuts = entry.snapshot?.topCategories, !shortcuts.isEmpty {
-                    HStack(spacing: 8) {
-                        ForEach(shortcuts.prefix(3)) { shortcut in
-                            CategoryShortcutButton(shortcut: shortcut)
+                    ZStack {
+                        Color(.systemGray5)
+                        if let img = entry.image {
+                            Image(uiImage: img)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: imageSize, height: imageSize)
+                                .clipped()
+                        } else {
+                            Image(systemName: "doc.fill")
+                                .font(.largeTitle)
+                                .foregroundStyle(.tertiary)
                         }
                     }
+                    .frame(width: imageSize, height: imageSize)
+                    .clipped()
                 }
+
+                // ── Text column ────────────────────────────────────────────
+                VStack(alignment: .leading, spacing: 6) {
+
+                    if let cat = entry.snapshot?.categoryName {
+                        Text(cat.uppercased())
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3)
+                            .background(Color(.systemGray5))
+                            .clipShape(Capsule())
+                    }
+
+                    Link(destination: documentURL) {
+                        Text(entry.snapshot?.name ?? "No upcoming documents")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.primary)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .multilineTextAlignment(.leading)
+                    }
+
+                    if let note = entry.snapshot?.notePreview, !note.isEmpty {
+                        Text(note)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(3)
+                    }
+
+                    Spacer(minLength: 0)
+                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .containerBackground(Color(.systemBackground), for: .widget)
     }
 }
 
-// MARK: - Widget
+// MARK: - Widget declaration
 
 struct DocumentWidget: Widget {
     let kind = "hhDocumentWidget"
@@ -299,7 +271,7 @@ struct DocumentWidget: Widget {
         name: "SQ 123 Boarding Pass", categoryName: "Flight",
         notePreview: "SEAT: 34A • GATE: B12",
         imagePath: "", startDate: nil, endDate: nil,
-        topCategories: previewShortcuts
+        topCategories: []
     ), image: nil)
 }
 
@@ -311,6 +283,6 @@ struct DocumentWidget: Widget {
         name: "SQ 123 Boarding Pass", categoryName: "Flight",
         notePreview: "FLIGHT: SQ 123 • SEAT: 34A • GATE: B12",
         imagePath: "", startDate: nil, endDate: nil,
-        topCategories: previewShortcuts
+        topCategories: []
     ), image: nil)
 }

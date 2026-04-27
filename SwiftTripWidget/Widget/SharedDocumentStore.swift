@@ -6,13 +6,13 @@
 import Foundation
 import UIKit
 
-// MARK: - Category shortcut
+// MARK: - Category shortcut (kept for API compatibility; widget no longer renders it)
 
 struct WidgetCategoryShortcut: Codable, Identifiable {
-    let id: String          // real CategoryModel UUID for deep link
-    let tripId: String      // real TripModel UUID ("" for global categories)
+    let id: String
+    let tripId: String
     let name: String
-    let icon: String        // SF Symbol name — copied directly from CategoryModel.icon
+    let icon: String
     let colorHex: String
 }
 
@@ -20,15 +20,15 @@ struct WidgetCategoryShortcut: Codable, Identifiable {
 
 struct WidgetDocumentSnapshot: Codable {
     let id: String
-    let categoryId: String  // so deep link can find the right category
-    let tripId: String      // "" when it belongs to a global category
+    let categoryId: String
+    let tripId: String
     let name: String
     let categoryName: String
     let notePreview: String
     let imagePath: String
     let startDate: Date?
     let endDate: Date?
-    let topCategories: [WidgetCategoryShortcut]
+    let topCategories: [WidgetCategoryShortcut]   // reserved; widget ignores this
 }
 
 // MARK: - Store
@@ -52,11 +52,6 @@ final class SharedDocumentStore {
                               recentDocuments: [DocumentModel] = []) {
         guard let defaults = sharedDefaults else { return }
 
-        // Build shortcut buttons from ALL categories that actually have documents,
-        // picking the first 3 unique ones. This way the icons always match the app.
-        let shortcuts = buildShortcuts(trips: trips, globals: globalCategories)
-
-        // Pick the best document to show
         guard let (doc, categoryId, tripId) = pickNextDocument(
             trips: trips,
             globals: globalCategories,
@@ -78,7 +73,7 @@ final class SharedDocumentStore {
             imagePath:      sharedImagePath ?? doc.imageName,
             startDate:      doc.startDate,
             endDate:        doc.endDate,
-            topCategories:  shortcuts
+            topCategories:  []          // shortcuts no longer used by widget
         )
 
         if let data = try? JSONEncoder().encode(snapshot) {
@@ -97,50 +92,6 @@ final class SharedDocumentStore {
         return snapshot
     }
 
-    // MARK: - Build shortcuts
-    // Takes up to 3 categories that have at least 1 document.
-    // Uses the category's own icon and a color derived from its position.
-
-    private let shortcutColors = ["#5B8CFF", "#FF9F5B", "#5BCC8C"]
-
-    private func buildShortcuts(trips: [TripModel],
-                                globals: [CategoryModel]) -> [WidgetCategoryShortcut] {
-        var seen   = Set<UUID>()
-        var result = [WidgetCategoryShortcut]()
-
-        // Gather: active/upcoming trip categories first, then global
-        var pairs: [(cat: CategoryModel, tripId: String)] = []
-
-        let now = Date()
-        let activeTripsSorted = trips
-            .filter { $0.endDate >= now }
-            .sorted { $0.startDate < $1.startDate }
-
-        for trip in activeTripsSorted {
-            for cat in trip.categories {
-                pairs.append((cat, trip.id.uuidString))
-            }
-        }
-        for cat in globals {
-            pairs.append((cat, ""))
-        }
-
-        for (cat, tripId) in pairs {
-            guard !seen.contains(cat.id) else { continue }
-            seen.insert(cat.id)
-            let colorHex = shortcutColors[result.count % shortcutColors.count]
-            result.append(WidgetCategoryShortcut(
-                id:       cat.id.uuidString,
-                tripId:   tripId,
-                name:     cat.name,
-                icon:     cat.icon,          // ← exact icon from CategoryModel
-                colorHex: colorHex
-            ))
-            if result.count == 3 { break }
-        }
-        return result
-    }
-
     // MARK: - Pick document
     // Returns (document, categoryId, tripId).
     // Priority: soon (≤2 days), active now, most recently viewed, upcoming, last ended.
@@ -151,7 +102,6 @@ final class SharedDocumentStore {
         recents: [DocumentModel]
     ) -> (DocumentModel, String, String)? {
 
-        // Flatten all docs with their context
         var pool: [(doc: DocumentModel, catId: String, tripId: String)] = []
 
         for trip in trips {
@@ -228,7 +178,6 @@ final class SharedDocumentStore {
             .containerURL(forSecurityApplicationGroupIdentifier: appGroupID)
         else { return nil }
 
-        // Reuse existing copy if already in container
         if sourcePath.contains(containerURL.path) { return sourcePath }
 
         let destURL = containerURL.appendingPathComponent(
@@ -242,7 +191,6 @@ final class SharedDocumentStore {
                ?? UIImage(contentsOfFile: documentsURL(for: sourcePath).path)
         else { return nil }
 
-        // Keep widget copies conservative so WidgetKit never archives a large bitmap.
         let thumbnail = resizedForWidget(image, maxSide: 320, maxArea: 300_000)
         guard let data = thumbnail.jpegData(compressionQuality: 0.75)
         else { return nil }
@@ -251,8 +199,6 @@ final class SharedDocumentStore {
         return destURL.path
     }
 
-    /// Scales image down so neither dimension exceeds maxSide and total pixel area
-    /// stays below maxArea for safer WidgetKit archiving.
     private func resizedForWidget(_ image: UIImage, maxSide: CGFloat, maxArea: CGFloat) -> UIImage {
         let size = image.size
         let sideScale = min(maxSide / size.width, maxSide / size.height, 1)

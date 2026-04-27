@@ -140,7 +140,7 @@ struct ScanFlowCoordinator: View {
                 group.addTask {
                     guard let data = try? await item.loadTransferable(type: Data.self),
                           let img = UIImage(data: data) else { return nil }
-                    return img.downsampledForOCR()
+                    return await img.downsampledForOCR()
                 }
             }
             for await result in group { if let img = result { loaded.append(img) } }

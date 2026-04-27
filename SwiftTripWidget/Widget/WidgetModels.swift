@@ -1,6 +1,6 @@
 //
 //  WidgetModels.swift
-//  SwiftTripWidget
+//  hh / hhWidget  (add to BOTH targets)
 //
 
 import Foundation

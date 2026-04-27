@@ -232,27 +232,24 @@ class HomeViewModel: ObservableObject {
     
     // MARK: - Document removal
     
-    func deleteDocument(_ doc: DocumentModel,
-                        from category: CategoryModel,
-                        trip: TripModel?) {
-
+    func deleteDocument(_ doc: DocumentModel) {
+        
         // 1. Delete image file
         if !doc.imageName.isEmpty {
             removeImageFile(named: doc.imageName)
         }
 
-        // 2. Remove from trip (if exists)
-        if let trip = trip,
-           let tIdx = trips.firstIndex(where: { $0.id == trip.id }),
-           let cIdx = trips[tIdx].categories.firstIndex(where: { $0.id == category.id }) {
-
-            trips[tIdx].categories[cIdx].documents.removeAll {
-                $0.id == doc.id
+        // 2. Remove from ALL trips
+        for tIdx in trips.indices {
+            for cIdx in trips[tIdx].categories.indices {
+                trips[tIdx].categories[cIdx].documents.removeAll {
+                    $0.id == doc.id
+                }
             }
         }
 
-        // 3. Remove from global categories
-        if let cIdx = globalCategories.firstIndex(where: { $0.id == category.id }) {
+        // 3. Remove from ALL global categories (ID, Passport, VISA)
+        for cIdx in globalCategories.indices {
             globalCategories[cIdx].documents.removeAll {
                 $0.id == doc.id
             }
@@ -261,7 +258,7 @@ class HomeViewModel: ObservableObject {
         // 4. Remove from recents
         recentDocuments.removeAll { $0.id == doc.id }
 
-        // 5. (optional) remove from personalDocuments if used
+        // 5. Remove from personal documents (if used)
         personalDocuments.removeAll { $0.id == doc.id }
 
         // 6. Refresh widget

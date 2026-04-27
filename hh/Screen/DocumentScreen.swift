@@ -190,7 +190,7 @@ struct DocumentScreen: View {
     
 
     private func deletePhoto() {
-        vm.deleteDocument(document, from: category, trip: trip)
+        vm.deleteDocument(document)
         dismiss()
     }
     
@@ -390,7 +390,7 @@ struct PDFPagesSection: View {
     private func loadPages() {
         guard let url = pdfURL else { return }
         Task.detached(priority: .userInitiated) {
-            let loaded = UIImage.renderAllPDFPages(from: url)
+            let loaded = await UIImage.renderAllPDFPages(from: url)
             await MainActor.run { pages = loaded }
         }
     }
