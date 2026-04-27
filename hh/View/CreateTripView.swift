@@ -39,14 +39,11 @@ struct CreateTripView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Create") {
-                        let newTrip = TripModel(
+                        let newTrip = TripModel.makeNew(
                             name: tripName,
                             startDate: startDate,
                             endDate: endDate,
-                            description: description,
-                            imageName: "img_banner",         // default placeholder
-                            isSaved: false,
-                            categories: CategoryModel.defaultCategories
+                            description: description
                         )
                         onAdd(newTrip)
                         dismiss()

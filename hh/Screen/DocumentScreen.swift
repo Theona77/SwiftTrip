@@ -8,6 +8,7 @@ import SwiftUI
 
 struct DocumentScreen: View {
     @EnvironmentObject var vm: HomeViewModel
+    @Environment(\.dismiss) private var dismiss
     let document: DocumentModel
     let category: CategoryModel
     let trip: TripModel
@@ -161,7 +162,7 @@ struct DocumentScreen: View {
                     Button(role: .destructive) {
                         showDeletePhotoAlert = true
                     } label: {
-                        Text("Delete Photo")
+                        Text("Delete Document")
                             .font(.subheadline.bold())
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
@@ -174,7 +175,7 @@ struct DocumentScreen: View {
             .padding()
             .background(.ultraThinMaterial)
         }
-        .alert("Delete Photo?", isPresented: $showDeletePhotoAlert) {
+        .alert("Delete Document?", isPresented: $showDeletePhotoAlert) {
             Button("Delete", role: .destructive) { deletePhoto() }
             Button("Cancel", role: .cancel) {}
         } message: {
@@ -186,11 +187,11 @@ struct DocumentScreen: View {
         }
     }
     
+    
+
     private func deletePhoto() {
-        vm.removeImageFile(named: document.imageName)
-        var updated = document
-        updated.imageName = ""
-        vm.updateDocument(updated, in: category, trip: trip)
+        vm.deleteDocument(document, from: category, trip: trip)
+        dismiss()
     }
     
     private func timeString(_ date: Date) -> String {

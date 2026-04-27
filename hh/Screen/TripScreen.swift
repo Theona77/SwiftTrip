@@ -247,6 +247,8 @@ struct TripScreen: View {
             }
         }
         .padding(.horizontal)
+        .padding(.top, isEditing ? 12 : 0)
+        .animation(.easeInOut(duration: 0.2), value: isEditing)
     }
 
     private var tripSearchResultsContent: some View {
@@ -435,7 +437,9 @@ struct CategoryFolderCell: View {
                                 .foregroundStyle(.red)
                                 .background(Color.white.clipShape(Circle()))
                         }
-                        .offset(x: 6, y: -6)
+                        .offset(x: 6, y: -2)
+                        .transition(.scale(scale: 0.8).combined(with: .opacity))
+                        .animation(.easeInOut(duration: 0.18).delay(0.8), value: isEditing)
                     }
                 }
 

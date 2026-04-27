@@ -74,8 +74,8 @@ struct TripCardView: View {
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
-                        .background(Color.black)
-                        .foregroundStyle(.white)
+                        .background(Color.primary)
+                        .foregroundStyle(Color(.systemBackground))
                         .clipShape(Capsule())
                 }
                 .padding()

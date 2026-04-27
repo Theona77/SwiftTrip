@@ -231,6 +231,44 @@ class HomeViewModel: ObservableObject {
     }
     
     // MARK: - Document removal
+    
+    func deleteDocument(_ doc: DocumentModel,
+                        from category: CategoryModel,
+                        trip: TripModel?) {
+
+        // 1. Delete image file
+        if !doc.imageName.isEmpty {
+            removeImageFile(named: doc.imageName)
+        }
+
+        // 2. Remove from trip (if exists)
+        if let trip = trip,
+           let tIdx = trips.firstIndex(where: { $0.id == trip.id }),
+           let cIdx = trips[tIdx].categories.firstIndex(where: { $0.id == category.id }) {
+
+            trips[tIdx].categories[cIdx].documents.removeAll {
+                $0.id == doc.id
+            }
+        }
+
+        // 3. Remove from global categories
+        if let cIdx = globalCategories.firstIndex(where: { $0.id == category.id }) {
+            globalCategories[cIdx].documents.removeAll {
+                $0.id == doc.id
+            }
+        }
+
+        // 4. Remove from recents
+        recentDocuments.removeAll { $0.id == doc.id }
+
+        // 5. (optional) remove from personalDocuments if used
+        personalDocuments.removeAll { $0.id == doc.id }
+
+        // 6. Refresh widget
+        refreshWidget()
+    }
+    
+    
 
     func removeDocument(_ doc: DocumentModel, from category: CategoryModel, in trip: TripModel) {
         guard
