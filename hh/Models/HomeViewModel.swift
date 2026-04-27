@@ -211,6 +211,10 @@ class HomeViewModel: ObservableObject {
             let dIdx = trips[tIdx].categories[cIdx].documents.firstIndex(where: { $0.id == doc.id })
         else { return }
         trips[tIdx].categories[cIdx].documents[dIdx] = doc
+        // Sync recents so HomeScreen updates immediately
+        if let rIdx = recentDocuments.firstIndex(where: { $0.id == doc.id }) {
+            recentDocuments[rIdx] = doc
+        }
         refreshWidget()
     }
 
@@ -224,6 +228,40 @@ class HomeViewModel: ObservableObject {
             globalCategories[index].documents.append(doc)
             refreshWidget()
         }
+    }
+    
+    // MARK: - Document removal
+
+    func removeDocument(_ doc: DocumentModel, from category: CategoryModel, in trip: TripModel) {
+        guard
+            let tIdx = trips.firstIndex(where: { $0.id == trip.id }),
+            let cIdx = trips[tIdx].categories.firstIndex(where: { $0.id == category.id })
+        else { return }
+        trips[tIdx].categories[cIdx].documents.removeAll { $0.id == doc.id }
+        recentDocuments.removeAll { $0.id == doc.id }
+        refreshWidget()
+    }
+
+    func removeDocumentFromGlobal(_ doc: DocumentModel, category: CategoryModel) {
+        guard let cIdx = globalCategories.firstIndex(where: { $0.id == category.id }) else { return }
+        globalCategories[cIdx].documents.removeAll { $0.id == doc.id }
+        recentDocuments.removeAll { $0.id == doc.id }
+        refreshWidget()
+    }
+
+    func removeImageFile(named filename: String) {
+        guard !filename.isEmpty else { return }
+        let name = URL(fileURLWithPath: filename).lastPathComponent
+        let url = FileManager.default
+            .urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent(name)
+        try? FileManager.default.removeItem(at: url)
+    }
+
+    func updateTripDates(_ trip: TripModel, startDate: Date, endDate: Date) {
+        guard let idx = trips.firstIndex(where: { $0.id == trip.id }) else { return }
+        trips[idx].startDate = startDate
+        trips[idx].endDate = endDate
     }
 
     // MARK: - Widget refresh

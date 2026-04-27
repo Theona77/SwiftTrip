@@ -12,6 +12,8 @@ struct HomeScreen: View {
     @State private var showCreateTrip = false
     @State private var isEditingTrips = false
     @State private var selectedWidgetDocument: DocumentModel?
+    
+    @State private var selectedFullImageDoc: DocumentModel?
 
     @StateObject private var scanner = ScanFlowLauncher()
 
@@ -129,12 +131,38 @@ struct HomeScreen: View {
             } else {
                 VStack(spacing: 0) {
                     ForEach(vm.recentDocuments.prefix(5)) { doc in
-                        NavigationLink(destination: RecentDocumentDetailRouter(document: doc).environmentObject(vm)) {
-                            documentRow(for: doc)
+                        HStack(spacing: 12) {
+                            // Tap image → full screen
+                            Button {
+                                if UIImage.loadFromDocuments(named: doc.imageName) != nil {
+                                    selectedFullImageDoc = doc
+                                }
+                            } label: {
+                                docThumb(doc, size: 44)
+                            }
+                            .buttonStyle(.plain)
+
+                            // Tap text → document detail
+                            NavigationLink(
+                                destination: RecentDocumentDetailRouter(document: doc)
+                                    .environmentObject(vm)
+                            ) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(doc.name).font(.subheadline).lineLimit(1)
+                                        .foregroundStyle(.primary)
+                                    Text(doc.categoryName).font(.caption).foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+
                         if doc.id != vm.recentDocuments.prefix(5).last?.id {
-                            Divider().padding(.leading, 60)
+                            Divider().padding(.leading, 68)
                         }
                     }
                 }
@@ -142,6 +170,9 @@ struct HomeScreen: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .padding(.horizontal)
             }
+        }
+        .fullScreenCover(item: $selectedFullImageDoc) { doc in
+            FullImageViewer(image: UIImage.loadFromDocuments(named: doc.imageName))
         }
     }
 

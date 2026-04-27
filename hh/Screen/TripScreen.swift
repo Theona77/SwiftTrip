@@ -13,6 +13,20 @@ private struct TripDocumentSearchResult: Identifiable {
     var id: UUID { document.id }
 }
 
+private enum EditableTripDate: String, Identifiable {
+    case start
+    case end
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .start: return "Start Date"
+        case .end: return "End Date"
+        }
+    }
+}
+
 struct TripScreen: View {
     @EnvironmentObject var vm: HomeViewModel
     let trip: TripModel
@@ -21,13 +35,14 @@ struct TripScreen: View {
     @State private var isEditing = false
     @State private var searchText = ""
 
-    @State private var isEditingName = false
     @State private var draftName = ""
     @FocusState private var nameFocused: Bool
 
-    @State private var isEditingDescription = false
     @State private var draftDescription = ""
-    @FocusState private var descFocused: Bool
+
+    @State private var draftStartDate  = Date()
+    @State private var draftEndDate    = Date()
+    @State private var activeDateField: EditableTripDate?
 
     @StateObject private var scanner = ScanFlowLauncher()
 
@@ -82,7 +97,11 @@ struct TripScreen: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(isEditing ? "Done" : "Edit") { withAnimation { isEditing.toggle() } }
+                Button(isEditing ? "Done" : "Edit") {
+                    withAnimation {
+                        isEditing ? finishEditingTrip() : startEditingTrip()
+                    }
+                }
                     .buttonStyle(.borderedProminent)
                     .tint(isEditing ? .gray : .blue)
                     .controlSize(.small)
@@ -109,6 +128,29 @@ struct TripScreen: View {
                 vm.addCategory(CategoryModel(name: name, icon: icon, documents: []), to: currentTrip)
             }
         }
+        .sheet(item: $activeDateField) { field in
+            NavigationStack {
+                VStack(spacing: 20) {
+                    DatePicker(
+                        field.title,
+                        selection: binding(for: field),
+                        displayedComponents: [.date]
+                    )
+                    .datePickerStyle(.graphical)
+                    .labelsHidden()
+
+                    Button("Done") {
+                        activeDateField = nil
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+                .padding()
+                .navigationTitle(field.title)
+                .navigationBarTitleDisplayMode(.inline)
+            }
+            .presentationDetents([.medium])
+        }
         .scanFlow(scanner, tripID: currentTrip.id)
     }
 
@@ -116,29 +158,86 @@ struct TripScreen: View {
 
     private var nameField: some View {
         Group {
-            if isEditingName {
+            if isEditing {
                 TextField("Trip name", text: $draftName)
-                    .font(.title2.bold()).focused($nameFocused)
-                    .submitLabel(.done).onSubmit { commitName() }
-                    .padding(.horizontal).onAppear { nameFocused = true }
+                    .font(.title2.bold())
+                    .focused($nameFocused)
+                    .submitLabel(.done)
+                    .padding(.horizontal)
+                    .onAppear { nameFocused = true }
             } else {
-                HStack {
-                    Text(currentTrip.name).font(.title2.bold())
-                    Image(systemName: "pencil").font(.caption).foregroundStyle(.secondary)
-                }
-                .padding(.horizontal).contentShape(Rectangle())
-                .onTapGesture { draftName = currentTrip.name; isEditingName = true }
+                Text(currentTrip.name)
+                    .font(.title2.bold())
+                    .padding(.horizontal)
             }
         }
     }
 
     private var statusRow: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(currentTrip.upcomingOpt).font(.caption.bold()).foregroundStyle(.blue)
-            Text("\(currentTrip.startDate, style: .date) – \(currentTrip.endDate, style: .date)")
-                .font(.subheadline).foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 6) {
+            Text(currentTrip.upcomingOpt)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(currentTrip.statusColor)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(currentTrip.statusColor.opacity(0.12))
+                .clipShape(Capsule())
+                .padding(.horizontal)
+
+            if isEditing {
+                VStack(alignment: .leading, spacing: 6) {
+                    editableDateRow(title: "Start", value: draftStartDate) {
+                        activeDateField = .start
+                    }
+                    editableDateRow(title: "End", value: draftEndDate) {
+                        activeDateField = .end
+                    }
+                }
+                .padding(.horizontal)
+            } else {
+                Text("\(formattedTripDate(currentTrip.startDate)) – \(formattedTripDate(currentTrip.endDate))")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                .padding(.horizontal)
+            }
         }
-        .padding(.horizontal)
+    }
+
+    private func binding(for field: EditableTripDate) -> Binding<Date> {
+        switch field {
+        case .start:
+            return $draftStartDate
+        case .end:
+            return $draftEndDate
+        }
+    }
+
+    private func formattedTripDate(_ date: Date) -> String {
+        date.formatted(.dateTime.day().month(.abbreviated).year())
+    }
+
+    private func editableDateRow(title: String, value: Date, action: @escaping () -> Void) -> some View {
+        HStack {
+            Text(title)
+                .font(.subheadline)
+
+            Spacer()
+
+            Button(action: action) {
+                HStack(spacing: 8) {
+                    Text(formattedTripDate(value))
+                        .font(.subheadline)
+                    Image(systemName: "calendar")
+                        .font(.caption)
+                }
+                .foregroundStyle(.primary)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(Color(.systemGray6))
+                .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+        }
     }
 
     private var categoryGrid: some View {
@@ -233,41 +332,45 @@ struct TripScreen: View {
     private var descriptionSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Description").font(.headline).padding(.horizontal)
-            if isEditingDescription {
-                VStack(alignment: .leading, spacing: 8) {
-                    TextEditor(text: $draftDescription)
-                        .focused($descFocused).font(.subheadline).foregroundStyle(.secondary)
-                        .frame(minHeight: 80).padding(8)
-                        .background(Color(.systemGray6)).clipShape(RoundedRectangle(cornerRadius: 10))
-                        .padding(.horizontal).onAppear { descFocused = true }
-                    HStack {
-                        Spacer()
-                        Button("Done") { commitDescription() }.font(.subheadline.bold()).padding(.horizontal)
-                    }
-                }
+            if isEditing {
+                TextEditor(text: $draftDescription)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .frame(minHeight: 100)
+                    .padding(8)
+                    .background(Color(.systemGray6))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .padding(.horizontal)
             } else {
-                HStack(alignment: .top) {
-                    Text(currentTrip.description.isEmpty ? "Tap to add a description…" : currentTrip.description)
-                        .font(.subheadline)
-                        .foregroundStyle(currentTrip.description.isEmpty ? AnyShapeStyle(.tertiary) : AnyShapeStyle(.secondary))
-                    Spacer()
-                    Image(systemName: "pencil").font(.caption).foregroundStyle(.secondary)
-                }
-                .padding(.horizontal).contentShape(Rectangle())
-                .onTapGesture { draftDescription = currentTrip.description; isEditingDescription = true }
+                Text(currentTrip.description.isEmpty ? "No description" : currentTrip.description)
+                    .font(.subheadline)
+                    .foregroundStyle(currentTrip.description.isEmpty ? AnyShapeStyle(.tertiary) : AnyShapeStyle(.secondary))
+                    .padding(.horizontal)
             }
         }
     }
 
-    private func commitName() {
-        let t = draftName.trimmingCharacters(in: .whitespaces)
-        if !t.isEmpty { vm.renameTrip(currentTrip, to: t) }
-        isEditingName = false
+    private func startEditingTrip() {
+        draftName = currentTrip.name
+        draftDescription = currentTrip.description
+        draftStartDate = currentTrip.startDate
+        draftEndDate = currentTrip.endDate
+        isEditing = true
     }
 
-    private func commitDescription() {
-        vm.updateTripDescription(currentTrip, to: draftDescription)
-        isEditingDescription = false
+    private func finishEditingTrip() {
+        let trimmedName = draftName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedName.isEmpty, trimmedName != currentTrip.name {
+            vm.renameTrip(currentTrip, to: trimmedName)
+        }
+        if draftDescription != currentTrip.description {
+            vm.updateTripDescription(currentTrip, to: draftDescription)
+        }
+        if draftStartDate != currentTrip.startDate || draftEndDate != currentTrip.endDate {
+            vm.updateTripDates(currentTrip, startDate: draftStartDate, endDate: draftEndDate)
+        }
+        activeDateField = nil
+        isEditing = false
     }
 
     private func loadImage(named filename: String) -> UIImage? {

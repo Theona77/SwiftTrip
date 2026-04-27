@@ -21,5 +21,9 @@ extension HomeViewModel {
             let dIdx = globalCategories[cIdx].documents.firstIndex(where: { $0.id == doc.id })
         else { return }
         globalCategories[cIdx].documents[dIdx] = doc
+        // Sync recents
+        if let rIdx = recentDocuments.firstIndex(where: { $0.id == doc.id }) {
+            recentDocuments[rIdx] = doc
+        }
     }
 }

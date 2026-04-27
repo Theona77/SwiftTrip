@@ -57,7 +57,7 @@ struct TripCardView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(trip.upcomingOpt)
                         .font(.caption.bold())
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(trip.statusColor)   
 
                     HStack {
                         Text(trip.name).font(.headline)

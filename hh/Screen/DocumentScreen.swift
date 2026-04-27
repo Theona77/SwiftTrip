@@ -11,13 +11,15 @@ struct DocumentScreen: View {
     let document: DocumentModel
     let category: CategoryModel
     let trip: TripModel
+    @State private var showDeletePhotoAlert = false
     
     @State private var showEditSheet = false
     
     // Fix 6: show full-screen image on tap
     @State private var showFullImage = false
     
-    private var ocrFields: [(label: String, value: String)] {
+    private var ocrFields: [
+        (label: String, value: String)] {
         document.note
             .split(separator: "\n")
             .compactMap { line -> (String, String)? in
@@ -27,7 +29,10 @@ struct DocumentScreen: View {
                 let value = String(parts[1]).trimmingCharacters(in: .whitespaces)
                 return value.isEmpty ? nil : (label, value)
             }
+            
     }
+    
+    
     
     var body: some View {
         ScrollView {
@@ -114,6 +119,11 @@ struct DocumentScreen: View {
                     .padding(.bottom, 24)
                 }
                 
+                if let pdfName = document.pdfFilename {
+                    PDFPagesSection(pdfFilename: pdfName)
+                        .padding(.bottom, 16)
+                }
+                
                 if !document.note.isEmpty && ocrFields.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Note:")
@@ -136,27 +146,51 @@ struct DocumentScreen: View {
             vm.recordRecentDocument(document)
         }
         .safeAreaInset(edge: .bottom) {
-            Button { showEditSheet = true } label: {
-                Text("Edit Information")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+            VStack(spacing: 10) {
+                Button { showEditSheet = true } label: {
+                    Text("Edit Information")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+
+                if !document.imageName.isEmpty {
+                    Button(role: .destructive) {
+                        showDeletePhotoAlert = true
+                    } label: {
+                        Text("Delete Photo")
+                            .font(.subheadline.bold())
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color(.systemGray6))
+                            .foregroundStyle(.red)
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                    }
+                }
             }
             .padding()
             .background(.ultraThinMaterial)
         }
-        .sheet(isPresented: $showEditSheet) {
-            EditDocumentView(document: document) { updated in
-                vm.updateDocument(updated, in: category, trip: trip)
-            }
+        .alert("Delete Photo?", isPresented: $showDeletePhotoAlert) {
+            Button("Delete", role: .destructive) { deletePhoto() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("The photo will be removed from this document.")
         }
         // Fix 6 — full screen image viewer
         .fullScreenCover(isPresented: $showFullImage) {
             FullImageViewer(image:  UIImage.loadFromDocuments(named: document.imageName))
         }
+    }
+    
+    private func deletePhoto() {
+        vm.removeImageFile(named: document.imageName)
+        var updated = document
+        updated.imageName = ""
+        vm.updateDocument(updated, in: category, trip: trip)
     }
     
     private func timeString(_ date: Date) -> String {
@@ -293,6 +327,70 @@ struct EditDocumentView: View {
                     .buttonStyle(.borderedProminent)
                 }
             }
+        }
+    }
+}
+
+// MARK: - PDF Pages Viewer
+
+struct PDFPagesSection: View {
+    let pdfFilename: String
+    @State private var isExpanded = false
+    @State private var pages: [UIImage] = []
+
+    private var pdfURL: URL? {
+        let name = URL(fileURLWithPath: pdfFilename).lastPathComponent
+        return FileManager.default
+            .urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent(name)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Button {
+                withAnimation(.easeInOut) { isExpanded.toggle() }
+                if isExpanded && pages.isEmpty { loadPages() }
+            } label: {
+                HStack {
+                    Label("PDF Pages", systemImage: "doc.richtext")
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .foregroundStyle(.secondary)
+                        .font(.caption)
+                }
+                .padding(.horizontal)
+            }
+
+            if isExpanded {
+                if pages.isEmpty {
+                    ProgressView("Loading pages…")
+                        .padding()
+                } else {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(pages.indices, id: \.self) { i in
+                                Image(uiImage: pages[i])
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: 320)
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                    .shadow(color: .black.opacity(0.1), radius: 4)
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                }
+            }
+        }
+    }
+
+    private func loadPages() {
+        guard let url = pdfURL else { return }
+        Task.detached(priority: .userInitiated) {
+            let loaded = UIImage.renderAllPDFPages(from: url)
+            await MainActor.run { pages = loaded }
         }
     }
 }

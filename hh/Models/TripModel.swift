@@ -16,6 +16,7 @@ struct DocumentModel: Identifiable, Equatable, Codable, Hashable {
     var startDate: Date?
     var endDate: Date?
     var categoryName: String
+    var pdfFilename: String? = nil   // set when source is a PDF
 }
 
 struct CategoryModel: Identifiable, Equatable, Codable, Hashable {
@@ -47,14 +48,32 @@ struct TripModel: Identifiable, Equatable, Codable, Hashable {
     var isSaved: Bool
     var categories: [CategoryModel]
 
-    var isOngoing: Bool  { startDate <= Date() && endDate >= Date() }
-    var isUpcoming: Bool { startDate > Date() }
-    var isCompleted: Bool { endDate < Date() }
+    private var calendar: Calendar { .current }
+
+    private var today: Date {
+        calendar.startOfDay(for: Date())
+    }
+
+    private var startDay: Date {
+        calendar.startOfDay(for: startDate)
+    }
+
+    private var endDay: Date {
+        calendar.startOfDay(for: endDate)
+    }
+
+    var isCompleted: Bool { endDay < today }
+    var isUpcoming: Bool { startDay > today }
+    var isOngoing: Bool { !isCompleted && !isUpcoming }
+    
+    var statusColor: Color {
+        if isCompleted { return Color(.systemGray) }
+        return .blue
+    }
 
     var upcomingOpt: String {
-        let now = Date()
-        if endDate < now    { return "COMPLETED" }
-        if startDate <= now { return "ONGOING" }
+        if isCompleted { return "COMPLETED" }
+        if isOngoing { return "ONGOING" }
         return "UPCOMING"
     }
 
