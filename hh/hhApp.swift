@@ -9,9 +9,18 @@ import SwiftUI
 
 @main
 struct hhApp: App {
+    @StateObject private var deepLinkHandler = DeepLinkHandler.shared
+    @StateObject private var homeViewModel = HomeViewModel()
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
+                .environmentObject(deepLinkHandler)
+                .environmentObject(homeViewModel)
+                .onOpenURL { url in
+                    print("Opened URL:", url) // debug
+                    deepLinkHandler.handle(url: url)
+                }
         }
     }
 }
