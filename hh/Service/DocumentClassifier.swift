@@ -98,7 +98,7 @@ enum DocumentCategory: String, CaseIterable, Identifiable {
 // MARK: - Classification result
 
 struct DocumentClassification {
-    enum Source { case mrz, rule, model, keywords }
+    enum Source { case mrz, rule, model, keywords, foundationModel }
 
     let category: DocumentCategory
     /// 0…1. Below `DocumentClassifier.confidentThreshold` the UI should
@@ -114,6 +114,8 @@ struct DocumentClassification {
 //   2. Unambiguous phrases                  → e.g. "BOARDING PASS", "KARTU TANDA PENDUDUK"
 //   3. Create ML text classifier (if bundled and confident)
 //   4. Weighted whole-word keyword scoring  → fallback, or "Others" when weak
+//   5. (async, ScanStore) Apple Foundation Models refines low-confidence results
+//      and fills missing fields — see DocumentAIAssistant
 
 final class DocumentClassifier {
     static let shared = DocumentClassifier()
@@ -180,32 +182,32 @@ final class DocumentClassifier {
 
     /// (phrase, weight). Phrases match on whole words only.
     private static let keywords: [DocumentCategory: [(String, Double)]] = [
-        .boardingPass: [("BOARDING TIME", 3), ("GATE", 2), ("FLIGHT", 2), ("PENERBANGAN", 2),
+        .boardingPass: [("登机牌", 5), ("搭乗券", 5), ("탑승권", 5), ("ПОСАДОЧНЫЙ ТАЛОН", 5), ("CARTE D EMBARQUEMENT", 5), ("TARJETA DE EMBARQUE", 5), ("BORDKARTE", 5), ("BOARDING TIME", 3), ("GATE", 2), ("FLIGHT", 2), ("PENERBANGAN", 2),
                         ("SEAT", 1), ("DEPARTURE", 1), ("ARRIVAL", 1), ("TERMINAL", 1),
                         ("BOARDING", 2), ("ZONE", 0.5), ("CLASS", 0.5), ("AIRLINES", 1),
                         ("AIRWAYS", 1), ("AIRPORT", 1), ("BANDARA", 1)],
-        .train:        [("KERETA API", 4), ("KERETA", 3), ("KAI", 2), ("TRAIN", 3),
+        .train:        [("新幹線", 4), ("列車", 3), ("火车", 3), ("高铁", 4), ("動車", 3), ("기차", 3), ("열차", 3), ("KTX", 4), ("ПОЕЗД", 3), ("ZUG", 2), ("TRENO", 3), ("TREN", 3), ("GARE", 2), ("KERETA API", 4), ("KERETA", 3), ("KAI", 2), ("TRAIN", 3),
                         ("RAILWAY", 3), ("RAILINK", 4), ("STASIUN", 3), ("STATION", 1.5),
                         ("GERBONG", 3), ("CARRIAGE", 2), ("CAR NO", 1), ("COACH", 1),
                         ("SHINKANSEN", 4), ("KCIC", 4), ("WHOOSH", 4), ("KRL", 3),
                         ("EKSEKUTIF", 1), ("EKONOMI", 1)],
-        .nationalID:   [("NIK", 2), ("PROVINSI", 2), ("KABUPATEN", 1.5), ("KECAMATAN", 2),
+        .nationalID:   [("身分証明書", 4), ("身份证", 4), ("居民身份证", 5), ("주민등록증", 5), ("CARTE NATIONALE D IDENTITE", 5), ("PERSONALAUSWEIS", 5), ("DOCUMENTO NACIONAL DE IDENTIDAD", 5), ("CARTA D IDENTITA", 5), ("MYKAD", 5), ("NIK", 2), ("PROVINSI", 2), ("KABUPATEN", 1.5), ("KECAMATAN", 2),
                         ("KEL DESA", 2), ("RT RW", 2), ("AGAMA", 2), ("GOL DARAH", 2),
                         ("STATUS PERKAWINAN", 2), ("PEKERJAAN", 1.5), ("IDENTITY CARD", 4),
                         ("ID CARD", 3), ("RESIDENT", 1)],
-        .passport:     [("PASSPORT", 4), ("PASPOR", 4), ("PASSEPORT", 4), ("REISEPASS", 3),
+        .passport:     [("PASAPORTE", 4), ("PASSAPORTO", 4), ("PASPOORT", 4), ("PASZPORT", 4), ("ПАСПОРТ", 4), ("旅券", 4), ("护照", 4), ("護照", 4), ("여권", 4), ("جواز سفر", 4), ("หนังสือเดินทาง", 4), ("PASSPORT", 4), ("PASPOR", 4), ("PASSEPORT", 4), ("REISEPASS", 3),
                         ("PLACE OF BIRTH", 1), ("DATE OF ISSUE", 1), ("ISSUING AUTHORITY", 1),
                         ("AUTHORITY", 0.5), ("SURNAME", 1), ("GIVEN NAMES", 1)],
-        .visa:         [("VISA", 3), ("EMBASSY", 2), ("CONSULATE", 2), ("ENTRIES", 2),
+        .visa:         [("VISUM", 3), ("VISADO", 3), ("ビザ", 3), ("签证", 3), ("簽證", 3), ("사증", 3), ("비자", 3), ("ВИЗА", 3), ("VISA", 3), ("EMBASSY", 2), ("CONSULATE", 2), ("ENTRIES", 2),
                         ("NUMBER OF ENTRIES", 2), ("VALIDITY", 1), ("DURATION OF STAY", 2),
                         ("VISA TYPE", 2), ("IMMIGRATION", 1.5), ("IMIGRASI", 1.5),
                         ("VISA ON ARRIVAL", 3), ("EVISA", 3)],
-        .hotel:        [("HOTEL", 3), ("RESORT", 3), ("INN", 1.5), ("HOSTEL", 3), ("VILLA", 2),
+        .hotel:        [("ホテル", 3), ("호텔", 3), ("酒店", 3), ("飯店", 3), ("宾馆", 3), ("旅館", 3), ("ОТЕЛЬ", 3), ("ГОСТИНИЦА", 3), ("HÔTEL", 3), ("ALBERGO", 3), ("CHAMBRE", 1.5), ("HABITACIÓN", 1.5), ("HOTEL", 3), ("RESORT", 3), ("INN", 1.5), ("HOSTEL", 3), ("VILLA", 2),
                         ("CHECK IN", 2), ("CHECK OUT", 2), ("ROOM", 1.5), ("ROOM TYPE", 2),
                         ("GUEST", 1), ("NIGHTS", 2), ("NIGHT", 1), ("BREAKFAST", 1),
                         ("ACCOMMODATION", 3), ("PENGINAPAN", 3), ("KAMAR", 1.5),
                         ("AIRBNB", 3), ("HOST", 1)],
-        .event:        [("E TICKET", 1.5), ("ADMISSION", 2), ("CONCERT", 3), ("KONSER", 3),
+        .event:        [("コンサート", 3), ("콘서트", 3), ("演唱会", 3), ("入場券", 3), ("门票", 3), ("입장권", 3), ("BILLET", 1.5), ("ENTRADA", 1.5), ("E TICKET", 1.5), ("ADMISSION", 2), ("CONCERT", 3), ("KONSER", 3),
                         ("FESTIVAL", 3), ("THEME PARK", 3), ("DUFAN", 3), ("ANCOL", 2),
                         ("ANNUAL PASS", 3), ("ECARD", 2), ("VENUE", 2), ("STAGE", 1),
                         ("TIKET MASUK", 3), ("ENTRY TICKET", 3), ("MUSEUM", 2),
@@ -265,7 +267,12 @@ struct KeywordText {
     }
 
     func contains(_ phrase: String) -> Bool {
-        padded.contains(" " + phrase + " ")
+        // Scripts written without spaces (Chinese, Japanese, Thai …) can't use
+        // word boundaries, so match those as plain substrings.
+        if phrase.unicodeScalars.contains(where: { $0.value >= 0x0E00 && !(0x1E00...0x1EFF).contains($0.value) }) {
+            return padded.contains(phrase)
+        }
+        return padded.contains(" " + phrase + " ")
     }
 
     func containsAny(_ phrases: [String]) -> Bool {

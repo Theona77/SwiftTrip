@@ -7,6 +7,8 @@ The app classifies scans in four steps (`hh/Service/DocumentClassifier.swift`):
 3. **The Create ML text classifier.** The model is `DocumentTypeClassifier.mlmodel`. This step is used only when the model is bundled and its confidence is at least 0.6.
 4. **Weighted whole-word keyword scoring.** This is the fallback. The result is "Others" when the evidence is weak.
 
+After these steps, on iOS 26 devices with Apple Intelligence, `DocumentAIAssistant` asks Apple's on-device model (Foundation Models) for a second opinion. It does this only when the rules are unsure or key fields are missing. It can read languages the keyword lists don't cover, and it only fills gaps.
+
 Until a model is bundled, step 3 is skipped. The app still works with steps 1, 2 and 4.
 
 ## 1. Collect data

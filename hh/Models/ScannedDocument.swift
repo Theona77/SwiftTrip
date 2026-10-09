@@ -17,8 +17,9 @@ struct ScannedDocument: Identifiable {
     var category: DocumentCategory
     var predictedCategory: DocumentCategory = .other   // classifier output, before user edits
     var categoryConfidence: Double = 0                  // 0…1, see DocumentClassifier
-    var isProcessing: Bool = true   // true while OCR is running
+    var isProcessing: Bool = true   // true while OCR / AI refinement is running
     var ticketLabel: String = ""
+    var ocrRunID = UUID()           // ignores late results after a retake
 }
 
 // MARK: - ScanStore  (ObservableObject passed through the scan flow)
@@ -90,17 +91,44 @@ final class ScanStore: ObservableObject {
     }
 
     private func runOCR(on image: UIImage, for index: Int) {
+        guard scannedDocs.indices.contains(index) else { return }
+        let runID = UUID()
+        scannedDocs[index].ocrRunID = runID
+        // A retake starts fresh: the new result may replace the old category.
+        scannedDocs[index].predictedCategory = scannedDocs[index].category
+
         VisionOCRService.shared.recognise(image: image) { [weak self] data in
-            guard let self = self,
-                  self.scannedDocs.indices.contains(index) else { return }
-            var data = data
-            let result = DocumentClassifier.shared.classifyWithConfidence(data: data)
-            data.isBoardingPass = result.category == .boardingPass
-            self.scannedDocs[index].ocrData            = data
-            self.scannedDocs[index].category           = result.category
-            self.scannedDocs[index].predictedCategory  = result.category
-            self.scannedDocs[index].categoryConfidence = result.confidence
-            self.scannedDocs[index].isProcessing       = false
+            guard let self else { return }
+            // 1. Rules first — instant result.
+            let rules = DocumentClassifier.shared.classifyWithConfidence(data: data)
+            let assistant = DocumentAIAssistant.shared
+            let needsAssist = assistant.shouldAssist(data, rules: rules)
+            self.apply(data, rules, runID: runID, finished: !needsAssist)
+            guard needsAssist else { return }
+
+            // 2. On-device Foundation Model refines unsure results / fills gaps.
+            Task { [weak self] in
+                let (refined, result) = await assistant.refine(data, rules: rules)
+                self?.apply(refined, result, runID: runID, finished: true)
+            }
         }
+    }
+
+    private func apply(_ data: ExtractedDocumentData,
+                       _ result: DocumentClassification,
+                       runID: UUID,
+                       finished: Bool) {
+        // Look up by run ID: indices shift when docs are removed, and a retake
+        // starts a new run whose results must not be overwritten by this one.
+        guard let index = scannedDocs.firstIndex(where: { $0.ocrRunID == runID }) else { return }
+        var data = data
+        data.isBoardingPass = result.category == .boardingPass
+        // Keep a category the user already picked while the AI was still running.
+        let userEdited = scannedDocs[index].category != scannedDocs[index].predictedCategory
+        scannedDocs[index].ocrData            = data
+        if !userEdited { scannedDocs[index].category = result.category }
+        scannedDocs[index].predictedCategory  = result.category
+        scannedDocs[index].categoryConfidence = result.confidence
+        scannedDocs[index].isProcessing       = !finished
     }
 }

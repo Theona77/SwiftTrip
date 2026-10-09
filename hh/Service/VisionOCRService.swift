@@ -74,10 +74,6 @@ final class VisionOCRService {
     static let shared = VisionOCRService()
     private init() {}
 
-    /// Languages we try to read, in priority order. Filtered at runtime
-    /// against what the current OS supports.
-    private let preferredLanguages = ["id-ID", "en-US"]
-
     func recognise(image: UIImage, completion: @escaping (ExtractedDocumentData) -> Void) {
         guard let cgImage = image.cgImage else {
             completion(ExtractedDocumentData())
@@ -96,10 +92,9 @@ final class VisionOCRService {
         // Language correction "fixes" codes (PNR, passport no., NIK, MRZ) into
         // dictionary words — e.g. 0→O, 1→I — so keep it off.
         request.usesLanguageCorrection = false
-        if let supported = try? request.supportedRecognitionLanguages() {
-            let languages = preferredLanguages.filter { supported.contains($0) }
-            if !languages.isEmpty { request.recognitionLanguages = languages }
-        }
+        // Detect the script/language per document (Latin, CJK, Cyrillic, Arabic, Thai …)
+        // instead of assuming English — documents can come from any country.
+        request.automaticallyDetectsLanguage = true
 
         DispatchQueue.global(qos: .userInitiated).async {
             // Pass the EXIF orientation, otherwise rotated photos are read sideways.
