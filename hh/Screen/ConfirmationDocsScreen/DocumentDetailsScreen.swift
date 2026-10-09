@@ -251,6 +251,9 @@ struct DocumentDetailsScreen: View {
         for doc in docs {
             let fields = (doc.id == scannedDoc?.id) ? editableFields : doc.ocrData.extractedFields
             persistDocument(doc, fields: fields, targetTripID: sharedTripID)
+            TrainingSampleRecorder.shared.record(text: doc.ocrData.rawText,
+                                                 confirmed: doc.category,
+                                                 predicted: doc.predictedCategory)
         }
 
         vm.refreshWidget()

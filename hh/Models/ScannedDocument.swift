@@ -15,6 +15,8 @@ struct ScannedDocument: Identifiable {
     var image: UIImage
     var ocrData: ExtractedDocumentData
     var category: DocumentCategory
+    var predictedCategory: DocumentCategory = .other   // classifier output, before user edits
+    var categoryConfidence: Double = 0                  // 0…1, see DocumentClassifier
     var isProcessing: Bool = true   // true while OCR is running
     var ticketLabel: String = ""
 }
@@ -91,10 +93,14 @@ final class ScanStore: ObservableObject {
         VisionOCRService.shared.recognise(image: image) { [weak self] data in
             guard let self = self,
                   self.scannedDocs.indices.contains(index) else { return }
-            let category = DocumentClassifier.shared.classify(data: data)
-            self.scannedDocs[index].ocrData    = data
-            self.scannedDocs[index].category   = category
-            self.scannedDocs[index].isProcessing = false
+            var data = data
+            let result = DocumentClassifier.shared.classifyWithConfidence(data: data)
+            data.isBoardingPass = result.category == .boardingPass
+            self.scannedDocs[index].ocrData            = data
+            self.scannedDocs[index].category           = result.category
+            self.scannedDocs[index].predictedCategory  = result.category
+            self.scannedDocs[index].categoryConfidence = result.confidence
+            self.scannedDocs[index].isProcessing       = false
         }
     }
 }

@@ -1,0 +1,122 @@
+[
+  {
+    "text": "PROVINSI DKI JAKARTA\nJAKARTA SELATAN\nNIK : 3174011203900001\nNama : BUDI SANTOSO\nTempat/Tgl Lahir : JAKARTA, 12-03-1990\nJenis Kelamin : LAKI-LAKI Gol. Darah : O\nAlamat : JL. MELATI NO. 5\nRT/RW : 001/002\nKel/Desa : KEBAYORAN\nKecamatan : KEBAYORAN BARU\nAgama : ISLAM\nStatus Perkawinan : KAWIN\nPekerjaan : KARYAWAN SWASTA\nKewarganegaraan : WNI\nBerlaku Hingga : SEUMUR HIDUP",
+    "label": "nationalID"
+  },
+  {
+    "text": "PROVINSI JAWA BARAT\nKOTA BANDUNG\nNIK\n3273015507950002\nNama\nSITI RAHAYU\nTempat/Tgl Lahir\nBANDUNG, 15-07-1995\nAgama\nKRISTEN\nStatus Perkawinan\nBELUM KAWIN\nKewarganegaraan\nWNI",
+    "label": "nationalID"
+  },
+  {
+    "text": "REPUBLIC OF SINGAPORE\nIDENTITY CARD NO. S1234567D\nName\nTAN WEI MING\nRace CHINESE\nDate of birth 01-01-1988\nSex M\nCountry of birth SINGAPORE",
+    "label": "nationalID"
+  },
+  {
+    "text": "REPUBLIK INDONESIA\nPASPOR\nPASSPORT\nType/Jenis P\nKode Negara IDN\nNo. Paspor X1234567\nNama Lengkap/Full Name\nBUDI SANTOSO\nKewarganegaraan/Nationality INDONESIA\nTgl. Lahir/Date of birth 12 MAR 1990\nTgl. Habis Berlaku/Date of expiry 10 JAN 2031\nP<IDNSANTOSO<<BUDI<<<<<<<<<<<<<<<<<<<<<<<<<<\nX1234567<0IDN9003124M3101107<<<<<<<<<<<<<<04",
+    "label": "passport"
+  },
+  {
+    "text": "UNITED STATES OF AMERICA\nPASSPORT\nSurname DOE\nGiven Names JOHN\nNationality UNITED STATES OF AMERICA\nDate of birth 15 Apr 1985\nPlace of birth CALIFORNIA, U.S.A.\nDate of issue 02 Feb 2020\nDate of expiration 01 Feb 2030\nAuthority United States Department of State",
+    "label": "passport"
+  },
+  {
+    "text": "JAPAN\nPASSPORT\n旅券\nType P\nIssuing country JPN\nPassport No. TR1234567\nSurname YAMADA\nGiven name TARO\nNationality JAPAN\nDate of birth 05 MAY 1992\nSex M\nDate of issue 20 AUG 2022\nDate of expiry 20 AUG 2032",
+    "label": "passport"
+  },
+  {
+    "text": "VISA\nEMBASSY OF JAPAN JAKARTA\nType of visa TEMPORARY VISITOR\nNumber of entries SINGLE\nDuration of stay 15 DAYS\nValid until 10 DEC 2026\nName SANTOSO BUDI\nPassport No X1234567",
+    "label": "visa"
+  },
+  {
+    "text": "SCHENGEN VISA\nValid for ETATS SCHENGEN\nFrom 01-06-2026 Until 30-06-2026\nType of visa C\nNumber of entries MULT\nDuration of stay 30 days\nIssued in JAKARTA\nRemarks TOURISM",
+    "label": "visa"
+  },
+  {
+    "text": "REPUBLIC OF KOREA\nELECTRONIC VISA\nVisa Type C-3-9\nEntries SINGLE\nPeriod of Sojourn 90 DAYS\nValidity 3 MONTHS",
+    "label": "visa"
+  },
+  {
+    "text": "GARUDA INDONESIA\nBOARDING PASS\nNAME SANTOSO/BUDI MR\nFROM JAKARTA CGK\nTO DENPASAR DPS\nFLIGHT GA 410\nDATE 12 OCT 2026\nBOARDING TIME 07:40\nGATE 15\nSEAT 23A\nCLASS Y",
+    "label": "boardingPass"
+  },
+  {
+    "text": "AirAsia\nBoarding Pass\nGuest SITI RAHAYU\nFlight QZ 7510\nDeparture 10:05 Kuala Lumpur KUL\nArrival 11:10 Singapore SIN\nGate closes 09:45\nSeat 14C\nBooking No. K7XQ2P",
+    "label": "boardingPass"
+  },
+  {
+    "text": "SINGAPORE AIRLINES\nBOARDING PASS\nSQ 951\nSIN → CGK\nZONE 3 SEAT 41K\nGATE B6 BOARDING 18:20\nDOE/JOHN MR",
+    "label": "boardingPass"
+  },
+  {
+    "text": "Booking.com\nBooking confirmation\nGrand Hyatt Jakarta\nCheck-in Monday 12 October 2026 from 14:00\nCheck-out Wednesday 14 October 2026 until 12:00\n2 nights, 1 room\nRoom type Deluxe King\nBreakfast included\nGuest name Budi Santoso\nConfirmation number 4012345678",
+    "label": "hotel"
+  },
+  {
+    "text": "Agoda\nHotel Voucher\nThe Kayon Jungle Resort Ubud\nCheck In 20 Nov 2026\nCheck Out 23 Nov 2026\nRoom Deluxe Villa with Pool\nNo. of nights 3\nBooking ID 987654321",
+    "label": "hotel"
+  },
+  {
+    "text": "traveloka\nE-voucher Hotel\nNAMA HOTEL\nAston Kuta Hotel & Residence\nCheck-in 05 Des 2026\nCheck-out 07 Des 2026\nTipe Kamar Superior Room\nTamu Siti Rahayu\nNo. Reservasi 1234567890",
+    "label": "hotel"
+  },
+  {
+    "text": "KAI\nKERETA API INDONESIA\nBOARDING PASS KERETA\nArgo Bromo Anggrek\nGAMBIR - SURABAYA PASARTURI\nBerangkat 08:20 12 Okt 2026\nKelas EKSEKUTIF\nGerbong EKS-3 Kursi 7A\nKode Booking ABC1D2E",
+    "label": "train"
+  },
+  {
+    "text": "Whoosh\nKereta Cepat Jakarta Bandung KCIC\nStasiun Halim → Stasiun Tegalluar\nDeparture 09:00\nCar 4 Seat 12D\nPremium Economy",
+    "label": "train"
+  },
+  {
+    "text": "JR EAST\nSHINKANSEN\nTokyo → Kyoto\nNozomi 225\nCar No. 7 Seat 12-E\nReserved seat ticket",
+    "label": "train"
+  },
+  {
+    "text": "Reservation confirmed\nRestaurant Locavore NXT Ubud\nDate 13 Oct 2026\nTime 19:30\nParty size 2 guests\nTable reservation under Budi Santoso\nConfirmation code R8X2KQ",
+    "label": "reservation"
+  },
+  {
+    "text": "Car Rental Confirmation\nHertz Ngurah Rai Airport\nPick-up 12 Oct 2026 10:00\nReturn 15 Oct 2026 10:00\nVehicle Toyota Avanza or similar\nBooking number H1234567",
+    "label": "reservation"
+  },
+  {
+    "text": "Sewa Mobil\nReservasi Anda telah dikonfirmasi\nPenjemputan Bandara Juanda 08:00\nKode Booking 7HQ2ZP",
+    "label": "reservation"
+  },
+  {
+    "text": "Klook\nVoucher\nMount Batur Sunrise Trekking with Breakfast\nDate 14 Oct 2026\nPickup time 02:00 from hotel lobby\nMeeting point Hotel lobby\nGuide English speaking\nParticipants 2 adults",
+    "label": "activity"
+  },
+  {
+    "text": "GetYourGuide\nUbud Jungle Swing and Waterfall Tour\nActivity date 15 Oct 2026\nStart time 08:00\nMeeting point Ubud Palace\nBooking reference GYG1A2B3C",
+    "label": "activity"
+  },
+  {
+    "text": "Nusa Penida Snorkeling Trip\nFull day experience\nIncludes boat transfer, lunch, snorkeling gear\nPick up 07:00",
+    "label": "activity"
+  },
+  {
+    "text": "E-TICKET\nCOLDPLAY MUSIC OF THE SPHERES WORLD TOUR\nGelora Bung Karno Stadium\n15 Nov 2026 Gates open 17:00\nSection CAT 1 Row F Seat 23\nAdmission for one",
+    "label": "event"
+  },
+  {
+    "text": "DUFAN ANCOL\nTiket Masuk Dunia Fantasi\nBerlaku pada 12 Oktober 2026\nHarga Rp 295.000\nANNUAL PASS",
+    "label": "event"
+  },
+  {
+    "text": "We The Fest 2026\nFestival Pass 3 Days\nJIExpo Kemayoran\nWristband exchange at venue",
+    "label": "event"
+  },
+  {
+    "text": "Indomaret\nStruk Belanja\nAQUA 600ML 1 x 3.500\nTOTAL 3.500\nTUNAI 5.000\nKEMBALI 1.500",
+    "label": "other"
+  },
+  {
+    "text": "Travel insurance certificate\nPolicy number PL-2026-12345\nInsured person Budi Santoso\nCoverage period 12 Oct 2026 - 20 Oct 2026",
+    "label": "other"
+  },
+  {
+    "text": "Shopping list\nsunscreen\nadapter\nsnacks",
+    "label": "other"
+  }
+]
