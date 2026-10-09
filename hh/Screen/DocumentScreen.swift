@@ -183,7 +183,7 @@ struct DocumentScreen: View {
         }
         // Fix 6 — full screen image viewer
         .fullScreenCover(isPresented: $showFullImage) {
-            FullImageViewer(image:  UIImage.loadFromDocuments(named: document.imageName))
+            FullImageViewer(document: document)
         }
     }
     
@@ -227,37 +227,7 @@ struct DocumentScreen: View {
     }
 }
 
-// MARK: - Full Image Viewer (Fix 6)
-
-struct FullImageViewer: View {
-    @Environment(\.dismiss) private var dismiss
-    let image: UIImage?
-
-    var body: some View {
-        ZStack(alignment: .topTrailing) {
-            Color.black.ignoresSafeArea()
-
-            if let image {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .padding(12)
-                    .background(Color.white.opacity(0.2))
-                    .clipShape(Circle())
-            }
-            .padding()
-        }
-    }
-}
+// Full-screen viewer with zoom: see View/ZoomableImageViewer.swift
 
 // MARK: - Edit Document Form (unchanged)
 
@@ -338,6 +308,7 @@ struct PDFPagesSection: View {
     let pdfFilename: String
     @State private var isExpanded = false
     @State private var pages: [UIImage] = []
+    @State private var viewerStartPage: Int?
 
     private var pdfURL: URL? {
         let name = URL(fileURLWithPath: pdfFilename).lastPathComponent
@@ -378,6 +349,9 @@ struct PDFPagesSection: View {
                                     .frame(height: 320)
                                     .clipShape(RoundedRectangle(cornerRadius: 10))
                                     .shadow(color: .black.opacity(0.1), radius: 4)
+                                    .onTapGesture { viewerStartPage = i }
+                                    .accessibilityAddTraits(.isButton)
+                                    .accessibilityLabel("Page \(i + 1), tap to zoom")
                             }
                         }
                         .padding(.horizontal)
@@ -385,12 +359,20 @@ struct PDFPagesSection: View {
                 }
             }
         }
+        .fullScreenCover(isPresented: showViewer) {
+            FullImageViewer(images: pages, startIndex: viewerStartPage ?? 0)
+        }
+    }
+
+    private var showViewer: Binding<Bool> {
+        Binding(get: { viewerStartPage != nil },
+                set: { if !$0 { viewerStartPage = nil } })
     }
 
     private func loadPages() {
         guard let url = pdfURL else { return }
         Task.detached(priority: .userInitiated) {
-            let loaded = await UIImage.renderAllPDFPages(from: url)
+            let loaded = UIImage.renderAllPDFPages(from: url)
             await MainActor.run { pages = loaded }
         }
     }

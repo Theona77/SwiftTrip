@@ -61,7 +61,7 @@ final class SharedDocumentStore {
             return
         }
 
-        let sharedImagePath = copyImageToSharedContainer(from: doc.imageName)
+        let sharedImagePath = copyImageToSharedContainer(from: doc.imageName, documentID: doc.id)
 
         let snapshot = WidgetDocumentSnapshot(
             id:             doc.id.uuidString,
@@ -70,7 +70,7 @@ final class SharedDocumentStore {
             name:           doc.name,
             categoryName:   doc.categoryName,
             notePreview:    firstMeaningfulLine(doc.note),
-            imagePath:      sharedImagePath ?? doc.imageName,
+            imagePath:      sharedImagePath ?? "",
             startDate:      doc.startDate,
             endDate:        doc.endDate,
             topCategories:  []          // shortcuts no longer used by widget
@@ -173,30 +173,57 @@ final class SharedDocumentStore {
         note.split(separator: "\n").first.map(String.init) ?? ""
     }
 
-    private func copyImageToSharedContainer(from sourcePath: String) -> String? {
+    private static let widgetImageFolder = "widget_images"
+
+    /// Resolves a snapshot's `imagePath` to a file in the App Group container.
+    /// Current snapshots store a path relative to the container; older ones
+    /// stored an absolute path, which is still honoured if the file exists.
+    func imageURL(for imagePath: String) -> URL? {
+        guard !imagePath.isEmpty else { return nil }
+        if imagePath.hasPrefix("/") {
+            return FileManager.default.fileExists(atPath: imagePath)
+                ? URL(fileURLWithPath: imagePath) : nil
+        }
+        return FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: appGroupID)?
+            .appendingPathComponent(imagePath)
+    }
+
+    /// Writes one thumbnail per snapshot to the shared container and deletes
+    /// every older thumbnail, so the folder never grows. Returns the path
+    /// relative to the container (absolute container paths can change).
+    private func copyImageToSharedContainer(from sourcePath: String, documentID: UUID) -> String? {
         guard let containerURL = FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: appGroupID)
         else { return nil }
 
-        if sourcePath.contains(containerURL.path) { return sourcePath }
+        let folderURL = containerURL.appendingPathComponent(Self.widgetImageFolder, isDirectory: true)
+        // A new name per write makes WidgetKit pick up a replaced photo.
+        let fileName = "\(documentID.uuidString)-\(UUID().uuidString.prefix(8)).jpg"
+        let destURL = folderURL.appendingPathComponent(fileName)
 
-        let destURL = containerURL.appendingPathComponent(
-            "widget_images/\(UUID().uuidString).jpg"
-        )
-        try? FileManager.default.createDirectory(
-            at: destURL.deletingLastPathComponent(),
-            withIntermediateDirectories: true
-        )
+        try? FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
         guard let image = UIImage(contentsOfFile: sourcePath)
                ?? UIImage(contentsOfFile: documentsURL(for: sourcePath).path)
-        else { return nil }
+        else {
+            removeWidgetImages(in: folderURL, except: nil)
+            return nil
+        }
 
         let thumbnail = resizedForWidget(image, maxSide: 320, maxArea: 300_000)
-        guard let data = thumbnail.jpegData(compressionQuality: 0.75)
+        guard let data = thumbnail.jpegData(compressionQuality: 0.75),
+              (try? data.write(to: destURL, options: .atomic)) != nil
         else { return nil }
 
-        try? data.write(to: destURL)
-        return destURL.path
+        removeWidgetImages(in: folderURL, except: fileName)
+        return "\(Self.widgetImageFolder)/\(fileName)"
+    }
+
+    private func removeWidgetImages(in folderURL: URL, except keep: String?) {
+        let files = (try? FileManager.default.contentsOfDirectory(atPath: folderURL.path)) ?? []
+        for file in files where file != keep {
+            try? FileManager.default.removeItem(at: folderURL.appendingPathComponent(file))
+        }
     }
 
     private func resizedForWidget(_ image: UIImage, maxSide: CGFloat, maxArea: CGFloat) -> UIImage {

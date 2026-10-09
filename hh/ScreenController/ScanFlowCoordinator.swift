@@ -16,7 +16,7 @@ struct ScanFlowCoordinator: View {
     let source: Source
     var tripID: UUID? = nil
     var categoryName: String? = nil
-    var initialImages: [UIImage] = []
+    var initialInputs: [ScanInput] = []
     var launchSourceOnAppear = true
 
     @Environment(\.dismiss) private var dismiss
@@ -71,7 +71,7 @@ struct ScanFlowCoordinator: View {
             Task { await loadAndAdd(items, replacing: false) }
         }
         .fileImporter(isPresented: $showInitialFiles,
-                      allowedContentTypes: [.image, .jpeg, .png],
+                      allowedContentTypes: [.image, .pdf],
                       allowsMultipleSelection: true) { result in
             handleFileImport(result)
         }
@@ -105,8 +105,8 @@ struct ScanFlowCoordinator: View {
         guard !didBootstrap else { return }
         didBootstrap = true
 
-        if !initialImages.isEmpty {
-            store.addImages(initialImages)
+        if !initialInputs.isEmpty {
+            store.addInputs(initialInputs)
         } else if launchSourceOnAppear {
             openInitialSource()
         }
@@ -159,12 +159,12 @@ struct ScanFlowCoordinator: View {
 
     private func handleFileImport(_ result: Result<[URL], Error>) {
         guard case .success(let urls) = result else { return }
-        let images = urls.compactMap { url -> UIImage? in
+        let inputs = urls.compactMap { url -> ScanInput? in
             guard url.startAccessingSecurityScopedResource() else { return nil }
             defer { url.stopAccessingSecurityScopedResource() }
-            return (try? Data(contentsOf: url)).flatMap { UIImage(data: $0)?.downsampledForOCR() }
+            return ScanInput.load(from: url)
         }
-        if !images.isEmpty { store.addImages(images) }
+        store.addInputs(inputs)
     }
 }
 

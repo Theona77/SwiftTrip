@@ -33,10 +33,7 @@ struct DocumentDetailsScreen: View {
 
                 // ── Preview ──────────────────────────────────────────
                 Section("Captured Preview") {
-                    Image(uiImage: scannedDoc.image)
-                        .resizable()
-                        .scaledToFit()
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    TapToZoomImage(image: scannedDoc.image, pdfData: scannedDoc.pdfData)
                         .listRowInsets(EdgeInsets(top: 12, leading: 16,
                                                   bottom: 12, trailing: 16))
 
@@ -269,12 +266,14 @@ struct DocumentDetailsScreen: View {
             ?? scannedDoc.category.rawValue
 
         let filename = saveImageToDisk(scannedDoc.image)
+        let pdfFilename = scannedDoc.pdfData.flatMap(savePDFToDisk)
         let noteText = fields.map { "\($0.label): \($0.value)" }.joined(separator: "\n")
 
         let docModel = DocumentModel(
             name: name, imageName: filename, note: noteText,
             startDate: nil, endDate: nil,
-            categoryName: scannedDoc.category.rawValue
+            categoryName: scannedDoc.category.rawValue,
+            pdfFilename: pdfFilename
         )
 
         let cat = scannedDoc.category
@@ -289,6 +288,20 @@ struct DocumentDetailsScreen: View {
         }
 
         vm.recordRecentDocument(docModel)
+    }
+
+    /// Keeps the original PDF so every page can be viewed later.
+    private func savePDFToDisk(_ data: Data) -> String? {
+        let filename = UUID().uuidString + ".pdf"
+        let url = FileManager.default
+            .urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent(filename)
+        do {
+            try data.write(to: url)
+            return filename
+        } catch {
+            return nil
+        }
     }
 
     private func saveImageToDisk(_ image: UIImage) -> String {

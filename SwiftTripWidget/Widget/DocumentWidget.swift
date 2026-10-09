@@ -49,7 +49,8 @@ struct DocumentWidgetProvider: TimelineProvider {
     }
 
     private func loadWidgetImage(from path: String) -> UIImage? {
-        guard let image = UIImage(contentsOfFile: path) else { return nil }
+        guard let url = SharedDocumentStore.shared.imageURL(for: path),
+              let image = UIImage(contentsOfFile: url.path) else { return nil }
         return image.resizedForWidgetArchive(maxSide: 320, maxArea: 300_000)
     }
 }

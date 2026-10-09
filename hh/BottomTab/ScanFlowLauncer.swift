@@ -42,9 +42,9 @@ final class ScanFlowLauncher: ObservableObject {
 
     
     // Bisa dibaca dari luar
-    // pendingImages → buffer gambar sebelum masuk ke scan flow
+    // pendingInputs → buffer gambar/PDF sebelum masuk ke scan flow
     private(set) var source: ScanFlowCoordinator.Source = .photos
-    private(set) var pendingImages: [UIImage] = []
+    private(set) var pendingInputs: [ScanInput] = []
 
     // Entry point utama untuk memulai flow
     func show(source: ScanFlowCoordinator.Source) {
@@ -60,17 +60,21 @@ final class ScanFlowLauncher: ObservableObject {
     // Masuk ke tahap berikutnya setelah gambar sudah ada
     // Flow:
     // validasi (jangan kosong)
-    // simpan ke pendingImages
+    // simpan ke pendingInputs
     // trigger showScanFlow = true
     
     func launch(with images: [UIImage]) {
-        guard !images.isEmpty else { return }
-        pendingImages = images
+        launch(inputs: images.map { ScanInput(image: $0) })
+    }
+
+    func launch(inputs: [ScanInput]) {
+        guard !inputs.isEmpty else { return }
+        pendingInputs = inputs
         showScanFlow  = true
     }
 
     func reset() {
-        pendingImages = []
+        pendingInputs = []
     }
     
     // Convert hasil PhotosPicker → UIImage → langsung launch flow
@@ -103,13 +107,13 @@ final class ScanFlowLauncher: ObservableObject {
 
     func handleFileImport(_ result: Result<[URL], Error>) {
         guard case .success(let urls) = result else { return }
-        let images = urls.compactMap { url -> UIImage? in
+        // Images and PDFs — a PDF becomes one document with all its pages.
+        let inputs = urls.compactMap { url -> ScanInput? in
             guard url.startAccessingSecurityScopedResource() else { return nil }
             defer { url.stopAccessingSecurityScopedResource() }
-            return (try? Data(contentsOf: url))
-                .flatMap { UIImage(data: $0)?.downsampledForOCR() }
+            return ScanInput.load(from: url)
         }
-        launch(with: images)
+        launch(inputs: inputs)
     }
 }
 
@@ -129,14 +133,14 @@ struct ScanFlowModifier: ViewModifier {
                     ScanFlowCoordinator(
                         source: launcher.source,
                         tripID: tripID,
-                        initialImages: launcher.pendingImages,
+                        initialInputs: launcher.pendingInputs,
                         launchSourceOnAppear: false
                     )
                     .environmentObject(vm)
                 } else {
                     ScanFlowCoordinator(
                         source: launcher.source,
-                        initialImages: launcher.pendingImages,
+                        initialInputs: launcher.pendingInputs,
                         launchSourceOnAppear: false
                     )
                     .environmentObject(vm)
@@ -162,7 +166,7 @@ struct ScanFlowModifier: ViewModifier {
         // MARK: - Import File
             .fileImporter(
                 isPresented: $launcher.showFiles,
-                allowedContentTypes: [.image, .jpeg, .png],
+                allowedContentTypes: [.image, .pdf],
                 allowsMultipleSelection: true,
                 onCompletion: launcher.handleFileImport
             )

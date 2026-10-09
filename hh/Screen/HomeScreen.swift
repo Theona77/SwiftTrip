@@ -11,8 +11,6 @@ struct HomeScreen: View {
 
     @State private var showCreateTrip = false
     @State private var isEditingTrips = false
-    @State private var selectedWidgetDocument: DocumentModel?
-    
     @State private var selectedFullImageDoc: DocumentModel?
 
     @StateObject private var scanner = ScanFlowLauncher()
@@ -26,19 +24,6 @@ struct HomeScreen: View {
             if trimmedSearchText.isEmpty { homeContent }
             else { searchResultsContent }
         }
-        .background(
-            NavigationLink(
-                destination: Group {
-                    if let doc = selectedWidgetDocument {
-                        RecentDocumentDetailRouter(document: doc).environmentObject(vm)
-                    }
-                },
-                isActive: Binding(
-                    get: { selectedWidgetDocument != nil },
-                    set: { if !$0 { selectedWidgetDocument = nil } }
-                )
-            ) { EmptyView() }.hidden()
-        )
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
@@ -54,7 +39,7 @@ struct HomeScreen: View {
             CreateTripView { vm.addTrip($0) }
         }
         .scanFlow(scanner)
-        .onOpenURL { handleWidgetURL($0) }
+        // Widget links are handled once, in RootView via DeepLinkHandler.
     }
 
     private var addTripButton: some View {
@@ -172,7 +157,7 @@ struct HomeScreen: View {
             }
         }
         .fullScreenCover(item: $selectedFullImageDoc) { doc in
-            FullImageViewer(image: UIImage.loadFromDocuments(named: doc.imageName))
+            FullImageViewer(document: doc)
         }
     }
 
@@ -256,14 +241,5 @@ struct HomeScreen: View {
         let name = URL(fileURLWithPath: filename).lastPathComponent
         let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(name)
         return (try? Data(contentsOf: url)).flatMap(UIImage.init)
-    }
-
-    private func handleWidgetURL(_ url: URL) {
-        guard url.scheme == "hh", url.host == "document" else { return }
-        guard let idStr = url.pathComponents.filter({ $0 != "/" }).first,
-              let id = UUID(uuidString: idStr),
-              let doc = vm.allDocuments.first(where: { $0.id == id })
-        else { return }
-        selectedWidgetDocument = doc
     }
 }

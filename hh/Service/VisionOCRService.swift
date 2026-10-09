@@ -75,18 +75,56 @@ final class VisionOCRService {
     private init() {}
 
     func recognise(image: UIImage, completion: @escaping (ExtractedDocumentData) -> Void) {
+        recognise(pages: [image], completion: completion)
+    }
+
+    /// OCRs every page in order and parses the combined lines as one document.
+    func recognise(pages: [UIImage], completion: @escaping (ExtractedDocumentData) -> Void) {
+        var allLines: [String] = []
+        func next(_ index: Int) {
+            guard index < pages.count else {
+                let parsed = parse(lines: allLines, raw: allLines.joined(separator: "\n"))
+                completion(parsed)
+                return
+            }
+            recogniseLines(in: pages[index]) { lines in
+                allLines += lines
+                next(index + 1)
+            }
+        }
+        next(0)
+    }
+
+    /// Text that is already digital (a PDF's text layer) — no OCR needed.
+    func extract(fromText text: String) -> ExtractedDocumentData {
+        let lines = text.components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        return parse(lines: lines, raw: lines.joined(separator: "\n"))
+    }
+
+    /// Runs Vision on one image; calls back on the main queue with the text lines.
+    private func recogniseLines(in image: UIImage, completion: @escaping ([String]) -> Void) {
         guard let cgImage = image.cgImage else {
-            completion(ExtractedDocumentData())
+            completion([])
             return
         }
         let orientation = CGImagePropertyOrientation(image.imageOrientation)
 
+        // Vision may both throw from perform() and call the handler; report once.
+        let once = OnceFlag()
+        // @Sendable: called from Vision's background queue, hops to main itself.
+        let finish: @Sendable ([String]) -> Void = { lines in
+            DispatchQueue.main.async {
+                guard !once.isDone else { return }
+                once.isDone = true
+                completion(lines)
+            }
+        }
+
         let request = VNRecognizeTextRequest { request, _ in
             let observations = request.results as? [VNRecognizedTextObservation] ?? []
-            let lines = observations.compactMap { $0.topCandidates(1).first?.string }
-            let raw = lines.joined(separator: "\n")
-            let parsed = self.parse(lines: lines, raw: raw)
-            DispatchQueue.main.async { completion(parsed) }
+            finish(observations.compactMap { $0.topCandidates(1).first?.string })
         }
         request.recognitionLevel = .accurate
         // Language correction "fixes" codes (PNR, passport no., NIK, MRZ) into
@@ -98,8 +136,12 @@ final class VisionOCRService {
 
         DispatchQueue.global(qos: .userInitiated).async {
             // Pass the EXIF orientation, otherwise rotated photos are read sideways.
-            try? VNImageRequestHandler(cgImage: cgImage, orientation: orientation, options: [:])
-                .perform([request])
+            do {
+                try VNImageRequestHandler(cgImage: cgImage, orientation: orientation, options: [:])
+                    .perform([request])
+            } catch {
+                finish([])
+            }
         }
     }
 
@@ -286,6 +328,11 @@ final class VisionOCRService {
         // MRZ lines are not booking codes / titles.
         if let code = d.bookingCode, code.contains("<") { d.bookingCode = nil }
     }
+}
+
+/// Only touched on the main queue.
+private nonisolated final class OnceFlag {
+    var isDone = false
 }
 
 // MARK: - Orientation

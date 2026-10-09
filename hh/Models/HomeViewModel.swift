@@ -238,6 +238,9 @@ class HomeViewModel: ObservableObject {
         if !doc.imageName.isEmpty {
             removeImageFile(named: doc.imageName)
         }
+        if let pdf = doc.pdfFilename {
+            removeImageFile(named: pdf)
+        }
 
         // 2. Remove from ALL trips
         for tIdx in trips.indices {

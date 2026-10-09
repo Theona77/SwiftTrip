@@ -9,6 +9,8 @@ import SwiftUI
 enum AppDestination: Hashable {
     case category(CategoryModel, TripModel)
     case document(DocumentModel, CategoryModel, TripModel)
+    /// Any saved document (trip or personal essentials) — used by widget links.
+    case anyDocument(DocumentModel)
 }
 
 struct RootView: View {
@@ -34,6 +36,8 @@ struct RootView: View {
                                 CategoryScreen(category: cat, trip: trip)
                             case .document(let doc, let cat, let trip):
                                 DocumentScreen(document: doc, category: cat, trip: trip)
+                            case .anyDocument(let doc):
+                                RecentDocumentDetailRouter(document: doc)
                             }
                         }
                 }
@@ -60,11 +64,19 @@ struct RootView: View {
             navigationPath.append(AppDestination.category(cat, trip))
 
         case .document(let docId, let categoryId, let tripId):
-            guard let (doc, cat, trip) = resolveDocument(docId: docId, categoryId: categoryId, tripId: tripId)
-            else { return }
-            // Push category then document so back-navigation works naturally
-            navigationPath.append(AppDestination.category(cat, trip))
-            navigationPath.append(AppDestination.document(doc, cat, trip))
+            // Single handler for widget taps (HomeScreen no longer handles URLs,
+            // which used to open the document twice).
+            if !tripId.isEmpty,
+               let (doc, cat, trip) = resolveDocument(docId: docId, categoryId: categoryId, tripId: tripId) {
+                // Push category then document so back-navigation works naturally
+                navigationPath = NavigationPath()
+                navigationPath.append(AppDestination.category(cat, trip))
+                navigationPath.append(AppDestination.document(doc, cat, trip))
+            } else if let doc = vm.allDocuments.first(where: { $0.id.uuidString == docId }) {
+                // Personal essentials (no trip) or a stale trip ID — open the document directly.
+                navigationPath = NavigationPath()
+                navigationPath.append(AppDestination.anyDocument(doc))
+            }
 
         case .scan:
             showScanner = true

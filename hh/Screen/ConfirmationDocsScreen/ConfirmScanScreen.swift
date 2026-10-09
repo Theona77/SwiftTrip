@@ -39,10 +39,7 @@ struct ConfirmScanScreen: View {
                         }
                         .listRowBackground(Color(.systemGroupedBackground))
                     } else {
-                        Image(uiImage: doc.image)
-                            .resizable()
-                            .scaledToFit()
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                        TapToZoomImage(image: doc.image, pdfData: doc.pdfData, cornerRadius: 10)
                             .listRowInsets(EdgeInsets(top: 12, leading: 16,
                                                       bottom: 12, trailing: 16))
                     }

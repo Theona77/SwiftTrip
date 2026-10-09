@@ -13,6 +13,7 @@ import Combine
 struct ScannedDocument: Identifiable {
     let id = UUID()
     var image: UIImage
+    var pdfData: Data? = nil        // original PDF when imported from a PDF file
     var ocrData: ExtractedDocumentData
     var category: DocumentCategory
     var predictedCategory: DocumentCategory = .other   // classifier output, before user edits
@@ -37,28 +38,39 @@ final class ScanStore: ObservableObject {
 
     // ── Intake ────────────────────────────────────────────────────────────
     func addImages(_ images: [UIImage]) {
+        addInputs(images.map { ScanInput(image: $0) })
+    }
+
+    func addInputs(_ inputs: [ScanInput]) {
+        guard !inputs.isEmpty else { return }
         let offset = scannedDocs.count
-        for (i, img) in images.enumerated() {
+        for (i, input) in inputs.enumerated() {
             var doc = ScannedDocument(
-                image: img,
+                image: input.image,
+                pdfData: input.pdfData,
                 ocrData: ExtractedDocumentData(),
                 category: .other,
                 isProcessing: true
             )
-            doc.ticketLabel = "Ticket \(offset + i + 1) of \(offset + images.count)"
+            doc.ticketLabel = "Ticket \(offset + i + 1) of \(offset + inputs.count)"
             scannedDocs.append(doc)
 
             let idx = scannedDocs.count - 1
-            runOCR(on: img, for: idx)
+            runOCR(on: input, for: idx)
         }
         currentIndex = offset   // show first newly added
     }
 
     func replaceImage(_ image: UIImage, at index: Int) {
+        replaceInput(ScanInput(image: image), at: index)
+    }
+
+    func replaceInput(_ input: ScanInput, at index: Int) {
         guard scannedDocs.indices.contains(index) else { return }
-        scannedDocs[index].image = image
+        scannedDocs[index].image = input.image
+        scannedDocs[index].pdfData = input.pdfData
         scannedDocs[index].isProcessing = true
-        runOCR(on: image, for: index)
+        runOCR(on: input, for: index)
     }
 
     func setCategory(_ cat: DocumentCategory, at index: Int) {
@@ -90,14 +102,14 @@ final class ScanStore: ObservableObject {
         }
     }
 
-    private func runOCR(on image: UIImage, for index: Int) {
+    private func runOCR(on input: ScanInput, for index: Int) {
         guard scannedDocs.indices.contains(index) else { return }
         let runID = UUID()
         scannedDocs[index].ocrRunID = runID
         // A retake starts fresh: the new result may replace the old category.
         scannedDocs[index].predictedCategory = scannedDocs[index].category
 
-        VisionOCRService.shared.recognise(image: image) { [weak self] data in
+        let handle: (ExtractedDocumentData) -> Void = { [weak self] data in
             guard let self else { return }
             // 1. Rules first — instant result.
             let rules = DocumentClassifier.shared.classifyWithConfidence(data: data)
@@ -111,6 +123,16 @@ final class ScanStore: ObservableObject {
                 let (refined, result) = await assistant.refine(data, rules: rules)
                 self?.apply(refined, result, runID: runID, finished: true)
             }
+        }
+
+        if let text = input.pdfText {
+            // Digital PDF: its text layer is exact — skip OCR.
+            handle(VisionOCRService.shared.extract(fromText: text))
+        } else if !input.pagesForOCR.isEmpty {
+            // Scanned PDF: OCR every rendered page as one document.
+            VisionOCRService.shared.recognise(pages: input.pagesForOCR, completion: handle)
+        } else {
+            VisionOCRService.shared.recognise(image: input.image, completion: handle)
         }
     }
 

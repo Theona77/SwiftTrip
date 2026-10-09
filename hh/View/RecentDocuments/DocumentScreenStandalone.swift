@@ -164,7 +164,7 @@ struct DocumentScreenStandalone: View {
             }
         }
         .fullScreenCover(isPresented: $showFullImage) {
-            FullImageViewer(image: UIImage.loadFromDocuments(named: currentDoc.imageName))
+            FullImageViewer(document: currentDoc)
         }
     }
 
@@ -280,7 +280,7 @@ struct UnresolvedDocumentView: View {
         .navigationTitle(document.name)
         .navigationBarTitleDisplayMode(.inline)
         .fullScreenCover(isPresented: $showFullImage) {
-            FullImageViewer(image: UIImage.loadFromDocuments(named: document.imageName))
+            FullImageViewer(document: document)
         }
     }
 }
