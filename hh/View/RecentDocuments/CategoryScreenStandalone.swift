@@ -70,6 +70,7 @@ struct CategoryScreenStandalone: View {
                 } label: {
                     Image(systemName: "plus")
                 }
+                .accessibilityLabel("Add photo")
             }
         }
 

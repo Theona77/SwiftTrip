@@ -37,6 +37,7 @@ struct TripCardView: View {
                             .background(.ultraThinMaterial)
                             .clipShape(Circle())
                     }
+                    .accessibilityLabel(trip.isSaved ? "Remove \(trip.name) from saved" : "Save \(trip.name)")
                     .padding(10)
 
                     if isEditing {
@@ -48,6 +49,7 @@ struct TripCardView: View {
                                 .foregroundStyle(.red)
                                 .background(Color.white.clipShape(Circle()))
                         }
+                        .accessibilityLabel("Delete \(trip.name)")
                         .offset(x: -238, y: 10)
                     }
                 }

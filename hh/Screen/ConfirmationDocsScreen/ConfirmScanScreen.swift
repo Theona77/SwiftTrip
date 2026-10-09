@@ -116,6 +116,7 @@ struct ConfirmScanScreen: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button { onDiscard() } label: { Image(systemName: "xmark") }
+                    .accessibilityLabel("Discard scan")
             }
         }
         .safeAreaInset(edge: .bottom) {

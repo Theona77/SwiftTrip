@@ -28,6 +28,7 @@ struct BottomActionBar: View {
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(isFocused ? .primary : .secondary)
+                    .accessibilityHidden(true)   // the text field below is the control
                     .animation(.easeInOut(duration: 0.2), value: isFocused)
                     // Tap the icon to focus — doesn't block TextField's own tap
                     .onTapGesture { isFocused = true }
@@ -46,6 +47,7 @@ struct BottomActionBar: View {
                             Image(systemName: "xmark.circle.fill")
                                 .foregroundStyle(.secondary)
                         }
+                        .accessibilityLabel("Clear search")
                         .transition(.opacity.combined(with: .scale))
                     }
 
@@ -79,12 +81,14 @@ struct BottomActionBar: View {
                     }
                 } label: {
                     Image(systemName: "plus")
-                        .font(.system(size: 22, weight: .semibold))
+                        .font(.title2.weight(.semibold))
                         .foregroundStyle(.white)
                         .frame(width: 54, height: 54)
                         .background(Color.blue)
                         .clipShape(Circle())
                 }
+                .accessibilityLabel("Scan document")
+                .accessibilityHint("Choose camera, photos or files")
                 .transition(.scale.combined(with: .opacity))
             }
         }

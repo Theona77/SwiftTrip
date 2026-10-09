@@ -44,6 +44,11 @@ struct CategoryScreen: View {
                                     if isSelecting {
                                         documentThumbnail(doc)
                                             .onTapGesture { toggleSelection(doc) }
+                                            .accessibilityElement()
+                                            .accessibilityLabel(doc.name)
+                                            .accessibilityAddTraits(selectedDocIDs.contains(doc.id)
+                                                                    ? [.isButton, .isSelected] : .isButton)
+                                            .accessibilityHint("Selects this document")
                                     } else {
                                         NavigationLink(
                                             destination: DocumentScreen(
@@ -55,6 +60,7 @@ struct CategoryScreen: View {
                                             documentThumbnail(doc)
                                         }
                                         .buttonStyle(.plain)
+                                        .accessibilityLabel(doc.name)
                                     }
                                 }
                                 .onLongPressGesture {
@@ -111,6 +117,7 @@ struct CategoryScreen: View {
                     } label: {
                         Image(systemName: "plus")
                     }
+                    .accessibilityLabel("Add document")
                 }
             }
         }

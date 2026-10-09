@@ -437,6 +437,7 @@ struct CategoryFolderCell: View {
                                 .foregroundStyle(.red)
                                 .background(Color.white.clipShape(Circle()))
                         }
+                        .accessibilityLabel("Remove \(category.name)")
                         .offset(x: 6, y: -2)
                         .transition(.scale(scale: 0.8).combined(with: .opacity))
                         .animation(.easeInOut(duration: 0.18).delay(0.8), value: isEditing)

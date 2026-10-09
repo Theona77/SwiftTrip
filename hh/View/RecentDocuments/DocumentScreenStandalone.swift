@@ -54,6 +54,10 @@ struct DocumentScreenStandalone: View {
                             showFullImage = true
                         }
                     }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(currentDoc.name), document image")
+                    .accessibilityHint("Opens full screen with zoom")
+                    .accessibilityAddTraits(.isButton)
 
                 Text(currentDoc.name)
                     .font(.title2.bold())
@@ -79,7 +83,9 @@ struct DocumentScreenStandalone: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                             Text(currentDoc.startDate.map { timeString($0) } ?? "—")
-                                .font(.system(size: 36, weight: .bold, design: .rounded))
+                                .font(.system(.largeTitle, design: .rounded).weight(.bold))
+                                .minimumScaleFactor(0.6)
+                                .lineLimit(1)
                         }
                         Spacer()
                         Image(systemName: "arrow.right")
@@ -92,7 +98,9 @@ struct DocumentScreenStandalone: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                             Text(currentDoc.endDate.map { timeString($0) } ?? "—")
-                                .font(.system(size: 36, weight: .bold, design: .rounded))
+                                .font(.system(.largeTitle, design: .rounded).weight(.bold))
+                                .minimumScaleFactor(0.6)
+                                .lineLimit(1)
                         }
                     }
                     .padding(.horizontal)
@@ -264,6 +272,9 @@ struct UnresolvedDocumentView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                         .padding(.horizontal)
                         .onTapGesture { showFullImage = true }
+                        .accessibilityLabel("\(document.name), document image")
+                        .accessibilityHint("Opens full screen with zoom")
+                        .accessibilityAddTraits(.isButton)
                 }
                 Text(document.name)
                     .font(.title2.bold())

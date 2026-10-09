@@ -46,6 +46,8 @@ struct CreateCategoryView: View {
                                     )
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel(icon.replacingOccurrences(of: ".", with: " "))
+                            .accessibilityAddTraits(selectedIcon == icon ? .isSelected : [])
                         }
                     }
                     .padding(.vertical, 6)

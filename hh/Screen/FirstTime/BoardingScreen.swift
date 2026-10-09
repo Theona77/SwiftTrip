@@ -102,6 +102,7 @@ struct BoardingPage: View {
                         .padding(.horizontal, 24)
                 }
             }
+            .accessibilityHidden(true)   // decorative; the text below carries the message
             .scaleEffect(animate ? 1 : 0.95)
             .opacity(animate ? 1 : 0)
             .animation(.easeOut(duration: 0.5), value: animate)
