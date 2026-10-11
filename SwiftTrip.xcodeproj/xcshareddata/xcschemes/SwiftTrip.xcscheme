@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "549C9F3E2F87B147002B7095"
-               BuildableName = "hh.app"
-               BlueprintName = "hh"
-               ReferencedContainer = "container:hh.xcodeproj">
+               BuildableName = "SwiftTrip.app"
+               BlueprintName = "SwiftTrip"
+               ReferencedContainer = "container:SwiftTrip.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -46,9 +46,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "549C9F3E2F87B147002B7095"
-            BuildableName = "hh.app"
-            BlueprintName = "hh"
-            ReferencedContainer = "container:hh.xcodeproj">
+            BuildableName = "SwiftTrip.app"
+            BlueprintName = "SwiftTrip"
+            ReferencedContainer = "container:SwiftTrip.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -63,9 +63,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "549C9F3E2F87B147002B7095"
-            BuildableName = "hh.app"
-            BlueprintName = "hh"
-            ReferencedContainer = "container:hh.xcodeproj">
+            BuildableName = "SwiftTrip.app"
+            BlueprintName = "SwiftTrip"
+            ReferencedContainer = "container:SwiftTrip.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

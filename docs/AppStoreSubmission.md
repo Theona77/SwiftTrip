@@ -21,7 +21,7 @@ Answers for the **App Privacy** and **Accessibility** sections of SwiftTrip's Ap
 - **OCR and classification run on the device:** Vision, the PDF's own text layer, and Apple's on-device Foundation Models.
 - **Debug-only recorder:** `TrainingSampleRecorder` runs only in DEBUG builds and never sends anything.
 - **Privacy manifests:**
-  - `hh/PrivacyInfo.xcprivacy` and `SwiftTripWidget/PrivacyInfo.xcprivacy` declare no tracking and no collected data.
+  - `SwiftTrip/PrivacyInfo.xcprivacy` and `SwiftTripWidget/PrivacyInfo.xcprivacy` declare no tracking and no collected data.
   - They also declare UserDefaults use with reasons `CA92.1` (the app's own settings) and `1C8F.1` (the App Group shared with the widget).
 
 > If you ever add analytics, crash reporting, sign-in or cloud sync, you must update this label and the privacy manifests before release.

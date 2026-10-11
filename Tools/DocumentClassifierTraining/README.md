@@ -1,6 +1,6 @@
 # Document classifier training
 
-The app classifies scans in four steps (`hh/Service/DocumentClassifier.swift`):
+The app classifies scans in four steps (`SwiftTrip/Service/DocumentClassifier.swift`):
 
 1. **MRZ.** The machine-readable lines on passports, visas and ID cards are parsed by `MRZParser`, and their check digits are verified.
 2. **Unambiguous phrases.** For example "BOARDING PASS" or "KARTU TANDA PENDUDUK".
@@ -13,12 +13,12 @@ Until a model is bundled, step 3 is skipped. The app still works with steps 1, 2
 
 ## 1. Collect data
 
-Debug builds record every saved scan to `Documents/ClassifierTraining/samples.json`. Each record contains the OCR text in normalised form, the category the user confirmed, and what the classifier predicted. The recorder is `hh/Service/TrainingSampleRecorder.swift`.
+Debug builds record every saved scan to `Documents/ClassifierTraining/samples.json`. Each record contains the OCR text in normalised form, the category the user confirmed, and what the classifier predicted. The recorder is `SwiftTrip/Service/TrainingSampleRecorder.swift`.
 
 To get the file off the phone:
 
 1. In Xcode, open **Window ▸ Devices and Simulators**.
-2. Select **hh** and choose **Download Container…**.
+2. Select **SwiftTrip** and choose **Download Container…**.
 3. Copy the file from `AppData/Documents/ClassifierTraining/samples.json`.
 
 > The samples contain personal data from IDs and passports. Keep them out of git. `*.mlmodel` files are fine to commit; the training data is not.
@@ -47,7 +47,7 @@ Look at the confusion matrix to see which categories need more data.
 
 ## 3. Ship
 
-Drag `DocumentTypeClassifier.mlmodel` into the `hh/` folder in Xcode. The folder is synchronised, so the file is added to the target automatically. Xcode compiles it to `DocumentTypeClassifier.mlmodelc`, and `DocumentTextClassifier` loads it at launch.
+Drag `DocumentTypeClassifier.mlmodel` into the `SwiftTrip/` folder in Xcode. The folder is synchronised, so the file is added to the target automatically. Xcode compiles it to `DocumentTypeClassifier.mlmodelc`, and `DocumentTextClassifier` loads it at launch.
 
 ## Rules
 
