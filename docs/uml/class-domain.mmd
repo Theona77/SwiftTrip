@@ -1,0 +1,150 @@
+classDiagram
+direction TB
+
+class hhApp {
+  <<App>>
+  -homeViewModel: HomeViewModel
+  -deepLinkHandler: DeepLinkHandler
+  +body: Scene
+}
+
+class RootView {
+  <<View>>
+  -hasOnboarded: Bool
+  -navigationPath: NavigationPath
+  -handleDeepLink(DeepLinkDestination)
+}
+
+class AppDestination {
+  <<enumeration>>
+  category(CategoryModel, TripModel)
+  document(DocumentModel, CategoryModel, TripModel)
+  anyDocument(DocumentModel)
+}
+
+class HomeViewModel {
+  <<ObservableObject>>
+  +trips: List~TripModel~
+  +globalCategories: List~CategoryModel~
+  +recentDocuments: List~DocumentModel~
+  +personalDocuments: List~DocumentModel~
+  +searchText: String
+  +sortedTrips: List~TripModel~
+  +filteredDocuments: List~DocumentModel~
+  +addTrip(TripModel)
+  +removeTrip(TripModel)
+  +updateTripDates(TripModel, Date, Date)
+  +addCategory(CategoryModel, TripModel)
+  +removeCategory(CategoryModel, TripModel)
+  +addDocument(DocumentModel, CategoryModel, TripModel)
+  +updateDocument(DocumentModel, CategoryModel, TripModel)
+  +deleteDocument(DocumentModel)
+  +addPersonalDocumentToGlobalCategory(DocumentModel, DocumentCategory)
+  +recordRecentDocument(DocumentModel)
+  +refreshWidget()
+  +flushPendingWork()
+  -persistAppState()
+}
+
+class TripModel {
+  <<struct, Codable>>
+  +id: UUID
+  +name: String
+  +startDate: Date
+  +endDate: Date
+  +description: String
+  +imageName: String
+  +isSaved: Bool
+  +categories: List~CategoryModel~
+  +isUpcoming: Bool
+  +isOngoing: Bool
+  +isCompleted: Bool
+  +makeNew(name, startDate, endDate)$ TripModel
+}
+
+class CategoryModel {
+  <<struct, Codable>>
+  +id: UUID
+  +name: String
+  +icon: String
+  +documents: List~DocumentModel~
+  +defaultCategories: List~CategoryModel~$
+}
+
+class DocumentModel {
+  <<struct, Codable>>
+  +id: UUID
+  +name: String
+  +imageName: String
+  +note: String
+  +startDate: Date?
+  +endDate: Date?
+  +categoryName: String
+  +pdfFilename: String?
+}
+
+class DeepLinkHandler {
+  <<ObservableObject, singleton>>
+  +pendingDestination: DeepLinkDestination?
+  +handle(url: URL)
+}
+
+class DeepLinkDestination {
+  <<enumeration>>
+  document(id, categoryId, tripId)
+  category(id, tripId)
+}
+
+class SharedDocumentStore {
+  <<singleton, app + widget>>
+  -appGroupID: String
+  +updateWidgetSnapshot(trips, globalCategories, recentDocuments)
+  +loadSnapshot() WidgetDocumentSnapshot?
+  -pickNextDocument() DocumentModel?
+  -copyImageToSharedContainer(path, id) String?
+}
+
+class WidgetDocumentSnapshot {
+  <<struct, Codable>>
+  +id: String
+  +categoryId: String
+  +tripId: String
+  +name: String
+  +categoryName: String
+  +notePreview: String
+  +imagePath: String
+  +startDate: Date?
+  +endDate: Date?
+}
+
+class DocumentWidgetProvider {
+  <<TimelineProvider>>
+  +placeholder() DocumentEntry
+  +getSnapshot() DocumentEntry
+  +getTimeline() Timeline
+}
+
+class DocumentEntry {
+  <<TimelineEntry>>
+  +date: Date
+  +snapshot: WidgetDocumentSnapshot?
+  +image: UIImage?
+}
+
+hhApp *-- HomeViewModel : owns
+hhApp *-- DeepLinkHandler : owns
+hhApp --> RootView : shows
+RootView ..> HomeViewModel : observes
+RootView ..> DeepLinkHandler : observes
+RootView --> AppDestination : pushes
+DeepLinkHandler --> DeepLinkDestination
+HomeViewModel "1" o-- "*" TripModel : trips
+HomeViewModel "1" o-- "*" CategoryModel : globalCategories
+HomeViewModel "1" o-- "0..10" DocumentModel : recentDocuments
+TripModel "1" *-- "*" CategoryModel
+CategoryModel "1" *-- "*" DocumentModel
+HomeViewModel ..> SharedDocumentStore : refreshWidget()
+SharedDocumentStore ..> WidgetDocumentSnapshot : writes / reads
+DocumentWidgetProvider ..> SharedDocumentStore : loadSnapshot()
+DocumentWidgetProvider --> DocumentEntry : creates
+DocumentEntry --> WidgetDocumentSnapshot

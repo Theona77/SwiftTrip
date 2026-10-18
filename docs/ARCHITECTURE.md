@@ -1,6 +1,6 @@
 # SwiftTrip Architecture
 
-This document explains how SwiftTrip is built and why. For setup and day-to-day development, see [DEVELOPMENT.md](DEVELOPMENT.md).
+This document explains how SwiftTrip is built and why. UML class and sequence diagrams are in [UML.md](UML.md). For setup and day-to-day development, see [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ![SwiftTrip architecture](architecture.png)
 

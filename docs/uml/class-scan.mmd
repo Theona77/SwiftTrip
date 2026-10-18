@@ -1,0 +1,183 @@
+classDiagram
+direction TB
+
+class ScanFlowLauncher {
+  <<ObservableObject>>
+  +showScanFlow: Bool
+  +show(source: Source)
+  +launch(inputs: List~ScanInput~)
+  +loadAndLaunch(items) async
+  +handleFileImport(Result)
+}
+
+class ScanFlowCoordinator {
+  <<View>>
+  +source: Source
+  +tripID: UUID?
+  +initialInputs: List~ScanInput~
+  -store: ScanStore
+}
+
+class ScanInput {
+  <<struct>>
+  +image: UIImage
+  +pdfData: Data?
+  +pdfText: String?
+  +pagesForOCR: List~UIImage~
+  +isPDF: Bool
+  +load(from: URL)$ ScanInput?
+  +fromPDF(data: Data)$ ScanInput?
+}
+
+class ScanStore {
+  <<ObservableObject>>
+  +scannedDocs: List~ScannedDocument~
+  +currentIndex: Int
+  +currentDoc: ScannedDocument?
+  +addInputs(List~ScanInput~)
+  +replaceInput(ScanInput, Int)
+  +setCategory(DocumentCategory, Int)
+  +remove(at: Int)
+  -runOCR(on: ScanInput, for: Int)
+  -apply(data, result, runID, finished)
+}
+
+class ScannedDocument {
+  <<struct>>
+  +id: UUID
+  +image: UIImage
+  +pdfData: Data?
+  +ocrData: ExtractedDocumentData
+  +category: DocumentCategory
+  +predictedCategory: DocumentCategory
+  +categoryConfidence: Double
+  +isProcessing: Bool
+  +ocrRunID: UUID
+}
+
+class VisionOCRService {
+  <<singleton>>
+  +recognise(image, completion)
+  +recognise(pages, completion)
+  +extract(fromText: String) ExtractedDocumentData
+  +parse(lines, raw) ExtractedDocumentData
+}
+
+class MRZParser {
+  <<enum, static>>
+  +parse(lines: List~String~)$ MRZResult?
+}
+
+class MRZResult {
+  <<struct>>
+  +kind: Kind
+  +surname: String
+  +givenNames: String
+  +documentNumber: String
+  +nationality: String
+  +dateOfBirth: String?
+  +expiryDate: String?
+  +isValid: Bool
+}
+
+class ExtractedDocumentData {
+  <<struct>>
+  +rawText: String
+  +mrz: MRZResult?
+  +fullName: String?
+  +documentNumber: String?
+  +nik: String?
+  +bookingCode: String?
+  +pnr: String?
+  +flightNumber: String?
+  +seatNumber: String?
+  +origin / destination: String?
+  +date / time: String?
+  +hotelName: String?
+  +extractedFields: List~Field~
+}
+
+class DocumentClassifier {
+  <<singleton>>
+  +confidentThreshold: Double = 0.6$
+  +classifyWithConfidence(data) DocumentClassification
+  -keywordScore(text, data) DocumentClassification
+}
+
+class DocumentTextClassifier {
+  <<singleton, Core ML>>
+  -model: NLModel?
+  +isAvailable: Bool
+  +predict(rawText) Prediction?
+  +normalise(raw)$ String
+}
+
+class DocumentAIAssistant {
+  <<singleton, Foundation Models>>
+  -timeout: Double = 10
+  +isAvailable: Bool
+  +shouldAssist(data, rules) Bool
+  +refine(data, rules) async RefinedResult
+  -analyse(rawText) async GeneratedDocumentAnalysis?
+  -merge(analysis, data, rules) RefinedResult
+}
+
+class DocumentClassification {
+  <<struct>>
+  +category: DocumentCategory
+  +confidence: Double
+  +source: Source
+}
+
+class DocumentCategory {
+  <<enumeration>>
+  nationalID
+  passport
+  visa
+  boardingPass
+  hotel
+  train
+  reservation
+  activity
+  event
+  other
+  +trainingLabel: String
+  +tripCategoryName: String?
+}
+
+class TrainingSampleRecorder {
+  <<singleton, DEBUG only>>
+  +isEnabled: Bool
+  +record(text, confirmed, predicted)
+}
+
+class DocumentDetailsScreen {
+  <<View>>
+  +store: ScanStore
+  +tripID: UUID?
+}
+
+class HomeViewModel {
+  <<ObservableObject>>
+}
+
+ScanFlowLauncher ..> ScanInput : creates
+ScanFlowLauncher --> ScanFlowCoordinator : presents
+ScanFlowCoordinator *-- ScanStore : owns
+ScanStore "1" *-- "*" ScannedDocument
+ScanStore ..> ScanInput : consumes
+ScanStore ..> VisionOCRService : OCR
+ScanStore ..> DocumentClassifier : rules
+ScanStore ..> DocumentAIAssistant : refine (async)
+VisionOCRService ..> MRZParser
+VisionOCRService --> ExtractedDocumentData : produces
+ExtractedDocumentData --> MRZResult
+ScannedDocument --> ExtractedDocumentData
+ScannedDocument --> DocumentCategory
+DocumentClassifier ..> DocumentTextClassifier : optional model
+DocumentClassifier --> DocumentClassification : returns
+DocumentAIAssistant --> DocumentClassification : returns
+DocumentClassification --> DocumentCategory
+DocumentDetailsScreen ..> ScanStore : observes
+DocumentDetailsScreen ..> HomeViewModel : save
+DocumentDetailsScreen ..> TrainingSampleRecorder : record

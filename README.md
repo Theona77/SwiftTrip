@@ -38,7 +38,7 @@ SwiftTrip uses **MVVM** with SwiftUI:
 
 **Why this design?** Travel IDs are sensitive and connectivity at airports is unreliable, so everything is processed on the device. A single view model keeps every screen and the widget consistent. Plain JSON fits the small, personal data set better than a database or a backend.
 
-➡️ Full details: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**
+➡️ Full details: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**. UML class and sequence diagrams: **[docs/UML.md](docs/UML.md)**
 
 ---
 
@@ -116,6 +116,7 @@ SwiftTrip/
 | Document | Contents |
 |---|---|
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Layers, scan pipeline, classification, data model, persistence, widget, deep links, design decisions |
+| [docs/UML.md](docs/UML.md) | UML class diagrams (domain and widget, scan pipeline) and the scan sequence diagram |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Targets and settings, running and debugging, testing deep links and the widget, conventions, known cleanup |
 | [Tools/DocumentClassifierTraining/README.md](Tools/DocumentClassifierTraining/README.md) | Collecting samples and training and shipping the Create ML model |
 | [docs/AppStoreSubmission.md](docs/AppStoreSubmission.md) | App Privacy and Accessibility answers for App Store Connect |

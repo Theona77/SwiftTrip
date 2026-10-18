@@ -1,0 +1,34 @@
+sequenceDiagram
+autonumber
+actor U as User
+participant L as ScanFlowLauncher
+participant S as ScanStore
+participant O as VisionOCRService
+participant C as DocumentClassifier
+participant A as DocumentAIAssistant
+participant D as DocumentDetailsScreen
+participant VM as HomeViewModel
+participant W as SharedDocumentStore
+
+U->>L: Pick camera / photo / PDF
+L->>S: addInputs([ScanInput])
+alt digital PDF with text layer
+  S->>O: extract(fromText:)
+else photo or scanned PDF
+  S->>O: recognise(image / pages)
+  O->>O: Vision OCR + MRZParser
+end
+O-->>S: ExtractedDocumentData
+S->>C: classifyWithConfidence(data)
+C-->>S: DocumentClassification
+S-->>U: show category + fields (instant)
+opt unsure, "Others" or key fields missing
+  S->>A: refine(data, rules) async
+  A-->>S: gaps filled / category refined
+  S-->>U: update screen
+end
+U->>D: review, edit, choose trip
+D->>VM: addDocument / addPersonalDocumentToGlobalCategory
+VM->>VM: persist JSON (debounced 300 ms)
+VM->>W: refreshWidget (debounced 500 ms)
+W-->>U: widget shows next document
