@@ -1,6 +1,6 @@
 # SwiftTrip UML Diagrams
 
-UML views of SwiftTrip, drawn from the current code. For the narrative architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
+UML views of SwiftTrip, drawn from the current code. For product-level diagrams (use cases, goals and strategy, UI navigation, user journey), see [PRODUCT.md](PRODUCT.md). For the narrative architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 | Diagram | Shows |
 |---|---|

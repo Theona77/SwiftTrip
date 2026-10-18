@@ -116,6 +116,7 @@ SwiftTrip/
 | Document | Contents |
 |---|---|
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Layers, scan pipeline, classification, data model, persistence, widget, deep links, design decisions |
+| [docs/PRODUCT.md](docs/PRODUCT.md) | Product description, goals & strategy, UI/UX design: use case, requirement, state machine and activity diagrams |
 | [docs/UML.md](docs/UML.md) | UML class diagrams (domain and widget, scan pipeline) and the scan sequence diagram |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Targets and settings, running and debugging, testing deep links and the widget, conventions, known cleanup |
 | [Tools/DocumentClassifierTraining/README.md](Tools/DocumentClassifierTraining/README.md) | Collecting samples and training and shipping the Create ML model |
