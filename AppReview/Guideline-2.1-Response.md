@@ -55,15 +55,12 @@ Theona Arlinton
 - [ ] Record on a physical iPhone on the latest iOS (Control Center → Screen
       Recording). Start from the Home Screen tapping the app icon. Delete and
       reinstall first so onboarding appears. Follow steps 1–6 above.
-- [ ] Confirm the trip banner images (`img_banner*`, `img_korea`,
-      `img_boardingscreen`) are your own or properly licensed — section 6
-      asserts this.
-- [ ] Widget gallery name is currently "hh – Next Document"
-      (`SwiftTripWidget/Widget/DocumentWidget.swift:258`). Rename to
-      "SwiftTrip" so it matches the app name the reviewer sees.
-- [ ] The `hh://scan` deep link opens a placeholder sheet ("Camera / Scanner
-      View Here", `hh/ScreenController/RootView.swift:41`). Nothing links to it
-      today, but wire it to the real scanner or remove the case.
+- [x] Trip banner images (`img_banner*`, `img_korea`) replaced with original
+      illustrations made for this app.
+- [ ] Onboarding image (`img_boardingscreen`): confirm it is your own or
+      licensed, or replace it — section 6 asserts this.
+- [x] Widget gallery name renamed from "hh – Next Document" to "SwiftTrip".
+- [x] Removed the unused `hh://scan` deep link and its placeholder sheet.
 - [ ] App Privacy in App Store Connect: "Data Not Collected" matches this app.
 - [ ] Screenshots show real in-app screens (trip list, document details,
       widget), not only the onboarding screen.

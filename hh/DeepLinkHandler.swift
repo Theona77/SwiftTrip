@@ -11,7 +11,6 @@ import Combine
 enum DeepLinkDestination: Equatable {
     case document(id: String, categoryId: String, tripId: String)
     case category(id: String, tripId: String)
-    case scan
 }
 
 // MARK: - Handler
@@ -29,7 +28,6 @@ final class DeepLinkHandler: ObservableObject {
         // Expected formats:
         //   hh://document/{docId}/{categoryId}/{tripId}
         //   hh://category/{categoryId}/{tripId}
-        //   hh://scan
         let parts = url.pathComponents.filter { $0 != "/" }
 
         switch url.host {
@@ -45,9 +43,6 @@ final class DeepLinkHandler: ObservableObject {
             let catId  = parts[0]
             let tripId = parts.count >= 2 ? parts[1] : ""
             pendingDestination = .category(id: catId, tripId: tripId)
-
-        case "scan":
-            pendingDestination = .scan
 
         default:
             break

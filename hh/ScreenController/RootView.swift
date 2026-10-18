@@ -16,7 +16,6 @@ struct RootView: View {
     @EnvironmentObject var deepLinkHandler: DeepLinkHandler
     @EnvironmentObject var vm: HomeViewModel
 
-    @State private var showScanner = false
     @State private var navigationPath = NavigationPath()
 
     var body: some View {
@@ -36,9 +35,6 @@ struct RootView: View {
                                 DocumentScreen(document: doc, category: cat, trip: trip)
                             }
                         }
-                }
-                .sheet(isPresented: $showScanner) {
-                    Text("Camera / Scanner View Here")
                 }
             }
         }
@@ -65,9 +61,6 @@ struct RootView: View {
             // Push category then document so back-navigation works naturally
             navigationPath.append(AppDestination.category(cat, trip))
             navigationPath.append(AppDestination.document(doc, cat, trip))
-
-        case .scan:
-            showScanner = true
         }
     }
 
