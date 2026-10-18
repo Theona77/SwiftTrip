@@ -3,3 +3,5 @@ build/
 *.xcuserdata
 *.xcuserstate
 .DS_Store
+# Classifier training data (contains personal data from scans)
+Tools/DocumentClassifierTraining/samples*.json
