@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "2640"
+   LastUpgradeVersion = "2700"
    wasCreatedForAppExtension = "YES"
    version = "1.7">
    <BuildAction
@@ -65,15 +65,6 @@
             ReferencedContainer = "container:SwiftTrip.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <MacroExpansion>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "549C9F3E2F87B147002B7095"
-            BuildableName = "SwiftTrip.app"
-            BlueprintName = "SwiftTrip"
-            ReferencedContainer = "container:SwiftTrip.xcodeproj">
-         </BuildableReference>
-      </MacroExpansion>
       <EnvironmentVariables>
          <EnvironmentVariable
             key = "_XCWidgetKind"
@@ -110,15 +101,6 @@
             ReferencedContainer = "container:SwiftTrip.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <MacroExpansion>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "549C9F3E2F87B147002B7095"
-            BuildableName = "SwiftTrip.app"
-            BlueprintName = "SwiftTrip"
-            ReferencedContainer = "container:SwiftTrip.xcodeproj">
-         </BuildableReference>
-      </MacroExpansion>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

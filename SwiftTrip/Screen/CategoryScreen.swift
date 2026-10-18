@@ -22,7 +22,6 @@ struct CategoryScreen: View {
     @State private var showDeleteAlert  = false
 
     let columns  = Array(repeating: GridItem(.flexible(), spacing: 2), count: 3)
-    let cellSize = UIScreen.main.bounds.width / 3
 
     var body: some View {
         Group {
@@ -152,15 +151,18 @@ struct CategoryScreen: View {
     @ViewBuilder
     func documentThumbnail(_ doc: DocumentModel) -> some View {
         Group {
-            if let img = UIImage.loadFromDocuments(named: doc.imageName) {
+            if let img = UIImage.thumbnailFromDocuments(named: doc.imageName, maxPixelSize: 400) {
                 Image(uiImage: img).resizable().scaledToFill()
             } else {
                 Image(systemName: "photo")
                     .resizable().scaledToFit().padding().foregroundStyle(.gray)
             }
         }
-        .frame(width: cellSize, height: cellSize)
+        // Square cell sized by the grid column (replaces deprecated UIScreen.main).
+        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+        .aspectRatio(1, contentMode: .fit)
         .clipped()
+        .contentShape(Rectangle())
     }
 
     // MARK: - Actions

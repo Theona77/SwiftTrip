@@ -22,7 +22,7 @@ struct BoardingScreen: View {
                     title: "Store & Access",
                     highlighted: "Travel Documents",
                     subtitle: "Quickly, securely, and instantly.",
-                    image: "img_boardingscreen",
+                    image: "boarding",
                     isSystem: false
                 )
                 .tag(1)

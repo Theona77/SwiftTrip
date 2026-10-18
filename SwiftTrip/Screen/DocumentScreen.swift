@@ -45,7 +45,7 @@ struct DocumentScreen: View {
                     .padding(.top)
                     .padding(.bottom, 24)
                     .onTapGesture {
-                        if  UIImage.loadFromDocuments(named: document.imageName) != nil {
+                        if UIImage.documentImageExists(named: document.imageName) {
                             showFullImage = true
                         }
                     }
@@ -210,7 +210,7 @@ struct DocumentScreen: View {
     
     @ViewBuilder
     private var documentImage: some View {
-        if let uiImage = UIImage.loadFromDocuments(named: document.imageName) {
+        if let uiImage = UIImage.thumbnailFromDocuments(named: document.imageName, maxPixelSize: 1600) {
             Image(uiImage: uiImage)
                 .resizable()
                 .scaledToFit()

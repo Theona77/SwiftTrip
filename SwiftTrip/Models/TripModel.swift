@@ -91,7 +91,7 @@ struct TripModel: Identifiable, Equatable, Codable, Hashable {
         startDate: Calendar.current.date(byAdding: .day, value: 10, to: Date())!,
         endDate:   Calendar.current.date(byAdding: .day, value: 20, to: Date())!,
         description: "Cherry blossom season trip",
-        imageName: "img_banner",
+        imageName: "img_banner3",
         isSaved: false,
         categories: CategoryModel.defaultCategories
     )
@@ -101,7 +101,7 @@ struct TripModel: Identifiable, Equatable, Codable, Hashable {
         startDate: Calendar.current.date(byAdding: .day, value: -30, to: Date())!,
         endDate:   Calendar.current.date(byAdding: .day, value: -20, to: Date())!,
         description: "K-culture exploration",
-        imageName: "img_korea",
+        imageName: "img_banner2",
         isSaved: true,
         categories: CategoryModel.defaultCategories
     )

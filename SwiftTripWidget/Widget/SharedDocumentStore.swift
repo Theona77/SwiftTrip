@@ -5,6 +5,7 @@
 
 import Foundation
 import UIKit
+import ImageIO
 
 // MARK: - Category shortcut (kept for API compatibility; widget no longer renders it)
 
@@ -203,14 +204,14 @@ final class SharedDocumentStore {
         let destURL = folderURL.appendingPathComponent(fileName)
 
         try? FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
-        guard let image = UIImage(contentsOfFile: sourcePath)
-               ?? UIImage(contentsOfFile: documentsURL(for: sourcePath).path)
+        // Decode straight to thumbnail size; a full decode of a camera photo is slow and ~48 MB.
+        guard let thumbnail = downsampledImage(at: URL(fileURLWithPath: sourcePath), maxSide: 320)
+               ?? downsampledImage(at: documentsURL(for: sourcePath), maxSide: 320)
         else {
             removeWidgetImages(in: folderURL, except: nil)
             return nil
         }
 
-        let thumbnail = resizedForWidget(image, maxSide: 320, maxArea: 300_000)
         guard let data = thumbnail.jpegData(compressionQuality: 0.75),
               (try? data.write(to: destURL, options: .atomic)) != nil
         else { return nil }
@@ -226,21 +227,20 @@ final class SharedDocumentStore {
         }
     }
 
-    private func resizedForWidget(_ image: UIImage, maxSide: CGFloat, maxArea: CGFloat) -> UIImage {
-        let size = image.size
-        let sideScale = min(maxSide / size.width, maxSide / size.height, 1)
-        let area = size.width * size.height
-        let areaScale = area > maxArea ? sqrt(maxArea / area) : 1
-        let scale = min(sideScale, areaScale)
-
-        guard scale < 1 else { return image }
-
-        let newSize = CGSize(width: (size.width  * scale).rounded(),
-                             height: (size.height * scale).rounded())
-        let renderer = UIGraphicsImageRenderer(size: newSize)
-        return renderer.image { _ in
-            image.draw(in: CGRect(origin: .zero, size: newSize))
-        }
+    private func downsampledImage(at url: URL, maxSide: CGFloat) -> UIImage? {
+        guard !url.path.isEmpty,
+              FileManager.default.fileExists(atPath: url.path),
+              let source = CGImageSourceCreateWithURL(url as CFURL, nil)
+        else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxSide
+        ]
+        guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
+        else { return nil }
+        return UIImage(cgImage: cgImage)
     }
 
     private func documentsURL(for filename: String) -> URL {

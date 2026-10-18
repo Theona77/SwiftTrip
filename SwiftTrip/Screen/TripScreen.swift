@@ -317,7 +317,7 @@ struct TripScreen: View {
 
     private func tripSearchThumbnail(for doc: DocumentModel) -> some View {
         Group {
-            if let img = loadImage(named: doc.imageName) {
+            if let img = UIImage.thumbnailFromDocuments(named: doc.imageName, maxPixelSize: 240) {
                 Image(uiImage: img)
                     .resizable()
                     .scaledToFill()
@@ -373,16 +373,6 @@ struct TripScreen: View {
         }
         activeDateField = nil
         isEditing = false
-    }
-
-    private func loadImage(named filename: String) -> UIImage? {
-        guard !filename.isEmpty else { return nil }
-        if let img = UIImage(contentsOfFile: filename) { return img }
-        let name = URL(fileURLWithPath: filename).lastPathComponent
-        let url = FileManager.default
-            .urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent(name)
-        return (try? Data(contentsOf: url)).flatMap(UIImage.init)
     }
 }
 

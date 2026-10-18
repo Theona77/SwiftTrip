@@ -18,7 +18,6 @@ struct RootView: View {
     @EnvironmentObject var deepLinkHandler: DeepLinkHandler
     @EnvironmentObject var vm: HomeViewModel
 
-    @State private var showScanner = false
     @State private var navigationPath = NavigationPath()
 
     var body: some View {
@@ -41,9 +40,6 @@ struct RootView: View {
                             }
                         }
                 }
-                .sheet(isPresented: $showScanner) {
-                    Text("Camera / Scanner View Here")
-                }
             }
         }
         .onChange(of: deepLinkHandler.pendingDestination) { _, destination in
@@ -64,22 +60,11 @@ struct RootView: View {
             navigationPath.append(AppDestination.category(cat, trip))
 
         case .document(let docId, let categoryId, let tripId):
-            // Single handler for widget taps (HomeScreen no longer handles URLs,
-            // which used to open the document twice).
-            if !tripId.isEmpty,
-               let (doc, cat, trip) = resolveDocument(docId: docId, categoryId: categoryId, tripId: tripId) {
-                // Push category then document so back-navigation works naturally
-                navigationPath = NavigationPath()
-                navigationPath.append(AppDestination.category(cat, trip))
-                navigationPath.append(AppDestination.document(doc, cat, trip))
-            } else if let doc = vm.allDocuments.first(where: { $0.id.uuidString == docId }) {
-                // Personal essentials (no trip) or a stale trip ID — open the document directly.
-                navigationPath = NavigationPath()
-                navigationPath.append(AppDestination.anyDocument(doc))
-            }
-
-        case .scan:
-            showScanner = true
+            guard let (doc, cat, trip) = resolveDocument(docId: docId, categoryId: categoryId, tripId: tripId)
+            else { return }
+            // Push category then document so back-navigation works naturally
+            navigationPath.append(AppDestination.category(cat, trip))
+            navigationPath.append(AppDestination.document(doc, cat, trip))
         }
     }
 

@@ -256,7 +256,8 @@ struct DocumentWidget: Widget {
         StaticConfiguration(kind: kind, provider: DocumentWidgetProvider()) { entry in
             DocumentWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName("SwiftTrip – Next Document")
+
+        .configurationDisplayName("SwiftTrip")
         .description("Shows your document photo, category, and key details.")
         .supportedFamilies([.systemSmall, .systemMedium])
     }

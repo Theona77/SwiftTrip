@@ -50,7 +50,7 @@ struct DocumentScreenStandalone: View {
                     .padding(.top)
                     .padding(.bottom, 24)
                     .onTapGesture {
-                        if UIImage.loadFromDocuments(named: currentDoc.imageName) != nil {
+                        if UIImage.documentImageExists(named: currentDoc.imageName) {
                             showFullImage = true
                         }
                     }
@@ -184,7 +184,7 @@ struct DocumentScreenStandalone: View {
 
     @ViewBuilder
     private var documentImage: some View {
-        if let uiImage = UIImage.loadFromDocuments(named: currentDoc.imageName) {
+        if let uiImage = UIImage.thumbnailFromDocuments(named: currentDoc.imageName, maxPixelSize: 1600) {
             Image(uiImage: uiImage)
                 .resizable()
                 .scaledToFit()
@@ -265,7 +265,7 @@ struct UnresolvedDocumentView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                if let img = UIImage.loadFromDocuments(named: document.imageName) {
+                if let img = UIImage.thumbnailFromDocuments(named: document.imageName, maxPixelSize: 1600) {
                     Image(uiImage: img)
                         .resizable()
                         .scaledToFit()

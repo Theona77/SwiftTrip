@@ -304,7 +304,38 @@ class HomeViewModel: ObservableObject {
 
     // MARK: - Widget refresh
 
+    // A single user action (e.g. deleteDocument) can mutate several @Published
+    // arrays and call refreshWidget() more than once. Each refresh decodes the
+    // document photo and rewrites the widget thumbnail, so bursts are coalesced
+    // into one refresh shortly after the last change, keeping the main thread free.
+    private var widgetRefreshTask: Task<Void, Never>?
+    private var persistTask: Task<Void, Never>?
+
     func refreshWidget() {
+        widgetRefreshTask?.cancel()
+        widgetRefreshTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(500))
+            guard !Task.isCancelled else { return }
+            self?.performWidgetRefresh()
+        }
+    }
+
+    /// Runs any pending save / widget refresh immediately (call when the app backgrounds).
+    func flushPendingWork() {
+        if persistTask != nil {
+            persistTask?.cancel()
+            persistTask = nil
+            writeAppState()
+        }
+        if widgetRefreshTask != nil {
+            widgetRefreshTask?.cancel()
+            widgetRefreshTask = nil
+            performWidgetRefresh()
+        }
+    }
+
+    private func performWidgetRefresh() {
+        widgetRefreshTask = nil
         SharedDocumentStore.shared.updateWidgetSnapshot(
             trips: trips,
             globalCategories: globalCategories,
@@ -337,7 +368,18 @@ class HomeViewModel: ObservableObject {
         return now.timeIntervalSince(trip.endDate) + 1_000_000
     }
 
+    /// Every @Published didSet lands here, so coalesce bursts into a single disk write.
     private func persistAppState() {
+        persistTask?.cancel()
+        persistTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else { return }
+            self?.persistTask = nil
+            self?.writeAppState()
+        }
+    }
+
+    private func writeAppState() {
         let state = PersistedHomeState(
             trips: trips,
             personalDocuments: personalDocuments,

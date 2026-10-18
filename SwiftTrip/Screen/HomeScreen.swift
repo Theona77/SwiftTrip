@@ -119,7 +119,7 @@ struct HomeScreen: View {
                         HStack(spacing: 12) {
                             // Tap image → full screen
                             Button {
-                                if UIImage.loadFromDocuments(named: doc.imageName) != nil {
+                                if UIImage.documentImageExists(named: doc.imageName) {
                                     selectedFullImageDoc = doc
                                 }
                             } label: {
@@ -216,7 +216,7 @@ struct HomeScreen: View {
 
     private func docThumb(_ doc: DocumentModel, size: CGFloat, cornerRadius: CGFloat = 8) -> some View {
         Group {
-            if let img = loadImage(named: doc.imageName) {
+            if let img = UIImage.thumbnailFromDocuments(named: doc.imageName, maxPixelSize: 240) {
                 Image(uiImage: img).resizable().scaledToFill()
             } else {
                 Image(systemName: "doc.text").foregroundStyle(.secondary)
@@ -233,13 +233,5 @@ struct HomeScreen: View {
         }
         return vm.globalCategories.contains(where: { $0.documents.contains(doc) })
             ? "Personal Essentials" : "Saved Documents"
-    }
-
-    private func loadImage(named filename: String) -> UIImage? {
-        guard !filename.isEmpty else { return nil }
-        if let img = UIImage(contentsOfFile: filename) { return img }
-        let name = URL(fileURLWithPath: filename).lastPathComponent
-        let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(name)
-        return (try? Data(contentsOf: url)).flatMap(UIImage.init)
     }
 }
