@@ -57,8 +57,10 @@ Theona Arlinton
       reinstall first so onboarding appears. Follow steps 1–6 above.
 - [x] Trip banner images (`img_banner*`, `img_korea`) replaced with original
       illustrations made for this app.
-- [ ] Onboarding image (`img_boardingscreen`): confirm it is your own or
-      licensed, or replace it — section 6 asserts this.
+- [x] Onboarding image (`img_boardingscreen`) replaced with an original
+      illustration.
+- [x] App set to iPhone only (TARGETED_DEVICE_FAMILY = 1); only iPhone
+      screenshots are needed.
 - [x] Widget gallery name renamed from "hh – Next Document" to "SwiftTrip".
 - [x] Removed the unused `hh://scan` deep link and its placeholder sheet.
 - [ ] App Privacy in App Store Connect: "Data Not Collected" matches this app.
