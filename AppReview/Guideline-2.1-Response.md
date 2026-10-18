@@ -62,5 +62,8 @@ Theona Arlinton
 - [x] Widget gallery name renamed from "hh – Next Document" to "SwiftTrip".
 - [x] Removed the unused `hh://scan` deep link and its placeholder sheet.
 - [ ] App Privacy in App Store Connect: "Data Not Collected" matches this app.
+- [x] Privacy manifests added (`hh/PrivacyInfo.xcprivacy`,
+      `SwiftTripWidget/PrivacyInfo.xcprivacy`): no tracking, no collected
+      data, UserDefaults reasons CA92.1 / 1C8F.1.
 - [ ] Screenshots show real in-app screens (trip list, document details,
       widget), not only the onboarding screen.
