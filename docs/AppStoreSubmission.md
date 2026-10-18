@@ -67,5 +67,5 @@ Only claim a feature after **testing every common task with it turned on**. The 
 
 - **Privacy manifests:** present for both the app and the widget.
 - **Devices:** iPhone only (`TARGETED_DEVICE_FAMILY = 1`), so no iPad screenshots are needed.
-- **Widget name:** shows as "SwiftTrip – Next Document" in the widget gallery.
+- **Widget name:** shows as "SwiftTrip" in the widget gallery.
 - **Camera permission text:** "We use the camera to scan travel documents".
